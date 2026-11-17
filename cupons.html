@@ -272,7 +272,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
     <label class="chave" id="imp-f-anual-c"><input type="checkbox" id="imp-f-anual" checked><span><b>Só linhas com plano anual</b><small>Usa a coluna de plano ou periodicidade.</small></span></label>
     <label class="chave" id="imp-f-ativo-c"><input type="checkbox" id="imp-f-ativo" checked><span><b>Só alunos ativos</b><small>Usa a coluna de situação (A ou Ativo).</small></span></label>
     <div class="aviso" id="imp-resumo"></div>
-    <div class="card scroll"><table class="prev"><thead><tr><th>Matrícula</th><th>Nome</th><th>WhatsApp</th><th>Início</th><th>Término</th><th>Situação</th></tr></thead><tbody id="imp-prev"></tbody></table></div>
+    <div class="card scroll"><table class="prev"><thead><tr><th>Matrícula</th><th>Nome</th><th>WhatsApp</th><th>Plano</th><th>Valor pago</th><th>Por mês</th><th>Início</th><th>Término</th></tr></thead><tbody id="imp-prev"></tbody></table></div>
   </div>
   <div class="erro" id="imp-erro"></div>
   <div class="rodape-m"><button class="btn" onclick="fechar('m-import')">Cancelar</button><button class="btn pri" id="imp-ok" disabled onclick="importar()">Importar</button></div>
@@ -437,7 +437,7 @@ function renderKpis(){
   $('kpis').innerHTML=k.map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>').join('');
 }
 function linhaVenda(l){
-  if(l.venda_tipo==='ja_anual'){const r=l.respostas||{};return '<span class="sub">Sem compra no lançamento'+(r.plano_fim?'<br>Anual até '+dataBR(r.plano_fim):'')+'</span>'}
+  if(l.venda_tipo==='ja_anual'){const r=l.respostas||{};return '<span class="sub">Sem compra no lançamento'+(r.plano_valor?'<br>Pagou '+brl(r.plano_valor)+(r.plano_valor_mensal?' ('+brl(r.plano_valor_mensal)+'/mês)':''):'')+(r.plano_fim?'<br>Anual até '+dataBR(r.plano_fim):'')+'</span>'}
   return '<div>'+esc(LOTE[l.venda_lote]||'')+' · '+(l.venda_parcelas||12)+'x '+brl(l.venda_parcela)+'</div><div class="sub">'+dataBR(l.venda_data)+(l.venda_consultor?' · '+esc(l.venda_consultor):'')+'</div>';
 }
 function renderPart(){
@@ -722,8 +722,8 @@ function abrirWhats(){const l=leadCupom;if(!l)return;const url='https://wa.me/'+
 async function copiar(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||'Copiado')}catch(e){toast('Não foi possível copiar')}}
 
 /* ---------- importar anuais do SCA ---------- */
-const CAMPOS={mat:'Matrícula / cadastro',nome:'Nome',tel:'Telefone / WhatsApp',ini:'Início do plano',fim:'Término do plano',per:'Plano / periodicidade',sit:'Situação'};
-const PISTAS={mat:/^(c[oó]d|matr|cadastro|n[uú]mero|id\b)/i,nome:/nome/i,tel:/(fone|celular|whats|telefone|contato)/i,ini:/in[ií]cio/i,fim:/(fim|t[eé]rmino|vencimento|validade|final)/i,per:/(periodicidade|plano)/i,sit:/situa|status/i};
+const CAMPOS={mat:'Matrícula / cadastro',nome:'Nome',tel:'Telefone / WhatsApp',plano:'Plano',per:'Periodicidade',ini:'Início do plano',fim:'Término do plano',valor:'Valor pago (contrato)',mensal:'Valor por mês',sit:'Situação'};
+const PISTAS={mat:/^(c[oó]d|matr|cadastro|n[uú]mero|id\b)/i,nome:/nome/i,tel:/(fone|celular|whats|telefone|contato)/i,plano:/^plano/i,per:/periodic/i,ini:/in[ií]cio/i,fim:/(fim|t[eé]rmino|vencimento|validade|final)/i,valor:/^valor$|valor[-_ ]?(pago|total|cobran|contrato)/i,mensal:/mensal/i,sit:/situa|status/i};
 function abrirImport(){imp={rows:[],head:[],map:{}};$('imp-arq').value='';$('imp-map').hidden=true;$('imp-erro').textContent='';$('imp-ok').disabled=true;$('imp-ok').textContent='Importar';abrir('m-import')}
 $('imp-arq').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;$('imp-erro').textContent='';
@@ -735,7 +735,7 @@ $('imp-arq').addEventListener('change',async e=>{
     const hi=m.findIndex(r=>r.some(c=>/nome/i.test(String(c))));
     if(hi<0){$('imp-erro').textContent='Não encontrei a linha de títulos (com a coluna Nome).';return}
     imp.head=m[hi].map(c=>String(c).trim());imp.rows=m.slice(hi+1).filter(r=>r.some(c=>String(c).trim()!==''));
-    imp.map={};Object.keys(CAMPOS).forEach(k=>{let i=-1;if(k==='per')i=imp.head.findIndex(h=>/periodic/i.test(h));if(i<0)i=imp.head.findIndex((h,j)=>PISTAS[k].test(h)&&!Object.values(imp.map).includes(j));imp.map[k]=i});
+    imp.map={};Object.keys(CAMPOS).forEach(k=>{let i=-1;if(k==='per')i=imp.head.findIndex(h=>/periodic/i.test(h));if(k==='per'&&i<0)i=imp.head.findIndex(h=>/^plano/i.test(h));if(i<0&&k!=='per')i=imp.head.findIndex((h,j)=>PISTAS[k].test(h)&&!Object.values(imp.map).includes(j));imp.map[k]=i});
     if(imp.map.nome>=0&&imp.map.mat===imp.map.nome)imp.map.mat=-1;
     $('imp-cols').innerHTML=Object.keys(CAMPOS).map(k=>'<div class="campo"><label>'+CAMPOS[k]+'</label><select data-k="'+k+'" onchange="imp.map[this.dataset.k]=+this.value;prevImport()"><option value="-1">(não tem)</option>'+imp.head.map((h,i)=>'<option value="'+i+'"'+(imp.map[k]===i?' selected':'')+'>'+esc(h||('Coluna '+(i+1)))+'</option>').join('')+'</select></div>').join('');
     $('imp-map').hidden=false;prevImport();
@@ -750,6 +750,8 @@ function dataISO(v){
   if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}
   m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null;
 }
+function valorNum(v){if(typeof v==='number')return v;const s=String(v||'').replace(/[^\d,.-]/g,'');if(!s)return NaN;return Number(/,\d{1,2}$/.test(s)?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,''))}
+function mesesPlano(t,ini,fim){t=String(t).toLowerCase();if(/anual/.test(t))return 12;if(/semestr/.test(t))return 6;if(/trimestr/.test(t))return 3;if(/bimestr/.test(t))return 2;if(/mensal/.test(t))return 1;if(ini&&fim){const m=Math.round((Date.parse(fim)-Date.parse(ini))/(864e5*30.44));return m>0?m:0}return 0}
 function telNorm(v){let d=String(v||'').replace(/\D/g,'');if(d.length>=12&&d.startsWith('55'))d=d.slice(2);if(d.length===10||d.length===11)return d;return ''}
 function telFmt(d){return d?'('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4):''}
 function tituloNome(n){return String(n||'').trim().replace(/\s+/g,' ').toLowerCase().replace(/(^|\s)(\S)/g,(a,b,c)=>b+c.toUpperCase()).replace(/\s(Da|De|Do|Das|Dos|E)\s/g,m=>m.toLowerCase())}
@@ -759,24 +761,29 @@ function linhasImport(){
   for(const r of imp.rows){
     lidas++;
     const per=String(celula(r,'per')),sit=String(celula(r,'sit')).trim();
-    if($('imp-f-anual').checked&&imp.map.per>=0&&!/anual/i.test(per)){filtradas++;continue}
+    const planoNome=String(celula(r,'plano')).trim();
+    if($('imp-f-anual').checked&&(imp.map.per>=0||imp.map.plano>=0)&&!/anual/i.test(per+' '+planoNome)){filtradas++;continue}
     if($('imp-f-ativo').checked&&imp.map.sit>=0&&!/^(a|ativ)/i.test(sit)){filtradas++;continue}
     const mat=String(celula(r,'mat')).trim().replace(/\.0$/,''),nome=tituloNome(celula(r,'nome'));
     if(!mat||!/^[A-Za-z0-9]{1,15}$/.test(mat)||nome.length<3){invalidas++;continue}
     const tel=telNorm(celula(r,'tel'));
     if(mats.has(mat.toUpperCase())||(tel&&tels.has('55'+tel))||visto.has(mat.toUpperCase())){existentes++;continue}
     visto.add(mat.toUpperCase());if(!tel)semTel++;
-    out.push({mat,nome,tel,ini:dataISO(celula(r,'ini')),fim:dataISO(celula(r,'fim')),per:per.trim(),sit});
+    const ini=dataISO(celula(r,'ini')),valor=valorNum(celula(r,'valor'));let fim=dataISO(celula(r,'fim')),fimEst=false;
+    if(!fim&&ini){const m=mesesPlano(per+' '+planoNome);if(m){const d=new Date(ini+'T12:00:00');d.setMonth(d.getMonth()+m);fim=d.toISOString().slice(0,10);fimEst=true}}
+    let mensal=valorNum(celula(r,'mensal'));
+    if(!(mensal>0)&&valor>0){const m=mesesPlano(per+' '+planoNome,ini,fim);if(m)mensal=Math.round(valor/m*100)/100}
+    out.push({mat,nome,tel,ini,fim,fimEst,per:per.trim(),plano:planoNome,valor:valor>0?valor:null,mensal:mensal>0?mensal:null,sit});
   }
   return {out,lidas,filtradas,invalidas,existentes,semTel};
 }
 function prevImport(){
   const ok=imp.map.mat>=0&&imp.map.nome>=0;
-  $('imp-f-anual-c').hidden=!(imp.map.per>=0);$('imp-f-ativo-c').hidden=!(imp.map.sit>=0);
+  $('imp-f-anual-c').hidden=!(imp.map.per>=0||imp.map.plano>=0);$('imp-f-ativo-c').hidden=!(imp.map.sit>=0);
   if(!ok){$('imp-resumo').textContent='Escolha ao menos as colunas de matrícula e nome.';$('imp-prev').innerHTML='';$('imp-ok').disabled=true;return}
   const r=linhasImport();
-  $('imp-resumo').innerHTML='<b>'+r.out.length+' alunos para importar.</b> '+r.lidas+' linhas lidas'+(r.filtradas?' · '+r.filtradas+' fora do filtro':'')+(r.existentes?' · '+r.existentes+' já estão no Hub':'')+(r.invalidas?' · '+r.invalidas+' sem matrícula ou nome':'')+(r.semTel?' · <b>'+r.semTel+' sem telefone</b> (entram, mas sem WhatsApp para enviar o link)':'')+'.';
-  $('imp-prev').innerHTML=r.out.slice(0,8).map(x=>'<tr><td>'+esc(x.mat)+'</td><td>'+esc(x.nome)+'</td><td>'+esc(telFmt(x.tel)||'sem telefone')+'</td><td>'+dataBR(x.ini)+'</td><td>'+dataBR(x.fim)+'</td><td>'+esc(x.sit)+'</td></tr>').join('')+(r.out.length>8?'<tr><td colspan="6" class="sub">e mais '+(r.out.length-8)+'</td></tr>':'');
+  $('imp-resumo').innerHTML='<b>'+r.out.length+' alunos para importar.</b> '+r.lidas+' linhas lidas'+(r.filtradas?' · '+r.filtradas+' fora do filtro':'')+(r.existentes?' · '+r.existentes+' já estão no Hub':'')+(r.invalidas?' · '+r.invalidas+' sem matrícula ou nome':'')+(r.semTel?' · <b>'+r.semTel+' sem telefone</b> (entram, mas sem WhatsApp para enviar o link)':'')+'.'+(()=>{const v=r.out.filter(x=>x.mensal>=10);return v.length?' Ticket médio por mês: <b>'+brl(v.reduce((a,x)=>a+x.mensal,0)/v.length)+'</b> ('+v.length+' com valor; cortesias abaixo de R$ 10 por mês ficam fora da média).':''})();
+  $('imp-prev').innerHTML=r.out.slice(0,8).map(x=>'<tr><td>'+esc(x.mat)+'</td><td>'+esc(x.nome)+'</td><td>'+esc(telFmt(x.tel)||'sem telefone')+'</td><td>'+esc([x.plano,x.per].filter(Boolean).join(' · '))+'</td><td>'+(x.valor?brl(x.valor):'')+'</td><td>'+(x.mensal?brl(x.mensal):'')+'</td><td>'+dataBR(x.ini)+'</td><td>'+dataBR(x.fim)+(x.fimEst?' *':'')+'</td></tr>').join('')+(r.out.length>8?'<tr><td colspan="8" class="sub">e mais '+(r.out.length-8)+'</td></tr>':'')+(r.out.some(x=>x.fimEst)?'<tr><td colspan="8" class="sub">* Término estimado pelo início e pela periodicidade, porque veio vazio na planilha.</td></tr>':'');
   $('imp-ok').disabled=!r.out.length;$('imp-ok').textContent='Importar '+r.out.length+' alunos';
 }
 async function importar(){
@@ -784,7 +791,7 @@ async function importar(){
   const b=$('imp-ok');b.disabled=true;$('imp-erro').textContent='';
   const usados=new Set(leads.map(x=>x.codigo).filter(Boolean));
   const linhas=r.out.map(x=>{let c=codigoBase(x.nome,x.mat);if(usados.has(c)){for(const ch of 'BCDEFGHJKLMNPQRSTUVWXZ'){if(!usados.has(c+ch)){c=c+ch;break}}}usados.add(c);
-    return {academia_id:AC,campanha_id:camp.id,campanha_slug:SLUG,nome:x.nome,whatsapp:x.tel?telFmt(x.tel):null,whatsapp_norm:x.tel?'55'+x.tel:null,matricula:x.mat,codigo:c,venda_anual:false,venda_tipo:'ja_anual',venda_data:hoje(),venda_consultor:usuario||null,status:'aluno',origem:'base_sca',origem_primeira:'base_sca',consentimento:false,respostas:{plano:x.per,plano_inicio:x.ini,plano_fim:x.fim},historico:[{data:new Date().toISOString(),campanha:SLUG,origem:'importacao_sca',por:usuario}]}});
+    return {academia_id:AC,campanha_id:camp.id,campanha_slug:SLUG,nome:x.nome,whatsapp:x.tel?telFmt(x.tel):null,whatsapp_norm:x.tel?'55'+x.tel:null,matricula:x.mat,codigo:c,venda_anual:false,venda_tipo:'ja_anual',venda_data:hoje(),venda_consultor:usuario||null,status:'aluno',origem:'base_sca',origem_primeira:'base_sca',consentimento:false,respostas:{plano:x.plano||x.per,periodicidade:x.per,plano_inicio:x.ini,plano_fim:x.fim,plano_fim_estimado:!!x.fimEst,plano_valor:x.valor,plano_valor_mensal:x.mensal,situacao:x.sit,fonte:'planilha_sca'},historico:[{data:new Date().toISOString(),campanha:SLUG,origem:'importacao_sca',por:usuario}]}});
   let feitos=0;
   try{
     for(let i=0;i<linhas.length;i+=100){
