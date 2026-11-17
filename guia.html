@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Guia do lançamento · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F3F4F6;color:#14171C;font:16px/1.55 Inter,system-ui,sans-serif}
+.top{background:#14171C;color:#fff}
+.tin{max-width:1100px;margin:0 auto;padding:22px 24px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.tin img{height:46px}
+.tin h1{font:700 26px/1.2 'Space Grotesk',sans-serif;margin:0}
+.tin p{margin:3px 0 0;color:#B9BEC7;font-size:14.5px}
+nav{position:sticky;top:0;z-index:5;background:#14171C;border-top:1px solid #2A2F37}
+nav .in{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+nav a{color:#B9BEC7;text-decoration:none;font-size:14px;font-weight:500;padding:11px 12px;white-space:nowrap;border-bottom:3px solid transparent}
+nav a:hover{color:#fff;border-bottom-color:#E10600}
+main{max-width:1100px;margin:0 auto;padding:24px}
+section{margin-bottom:34px;scroll-margin-top:60px}
+h2{font:700 24px/1.2 'Space Grotesk',sans-serif;margin:0 0 6px}
+h2 small{display:block;font:500 13px Inter,sans-serif;color:#E10600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.lead{color:#3A404B;margin:0 0 16px;max-width:780px}
+.hero{background:#14171C;color:#fff;border-radius:18px;padding:26px;display:grid;grid-template-columns:1.3fr 1fr;gap:22px}
+.hero h3{font:700 30px/1.15 'Space Grotesk',sans-serif;margin:0 0 10px}
+.hero h3 b{color:#FF5A4F}
+.hero p{color:#D5D9DF;margin:0 0 8px}
+.big{background:#E10600;border-radius:14px;padding:18px;display:flex;flex-direction:column;justify-content:center}
+.big .n{font:700 40px/1 'Space Grotesk',sans-serif}
+.big .l{font-size:14.5px;margin-top:6px}
+@media(max-width:760px){.hero{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:16px}
+.card .t{font:600 17px 'Space Grotesk',sans-serif;margin-bottom:4px}
+.card .d{color:#5B6370;font-size:14.5px}
+.card .v{font:700 15px Inter,sans-serif;color:#E10600;margin-top:8px}
+.passos{display:grid;gap:10px;counter-reset:p}
+.passo{display:grid;grid-template-columns:56px 1fr;gap:14px;background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:16px;align-items:start}
+.passo::before{counter-increment:p;content:counter(p);width:44px;height:44px;border-radius:50%;background:#E10600;color:#fff;display:grid;place-items:center;font:700 20px 'Space Grotesk',sans-serif}
+.passo .t{font:600 18px 'Space Grotesk',sans-serif;margin-bottom:2px}
+.passo .d{color:#3A404B;font-size:15px}
+.passo .onde{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:600;background:#F3F4F6;border-radius:999px;padding:2px 10px;color:#5B6370}
+table{border-collapse:collapse;width:100%;background:#fff;border:1px solid #E3E5E9;border-radius:14px;overflow:hidden;font-size:15px}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-top:1px solid #E3E5E9}
+thead th{border-top:0;background:#14171C;color:#fff;font:600 15px 'Space Grotesk',sans-serif}
+.scroll{overflow-x:auto}
+.sim{color:#0F7A40;font-weight:700}.nao{color:#B42318;font-weight:700}
+.duas{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.duas{grid-template-columns:1fr}}
+.lista{background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:16px 18px}
+.lista h3{font:700 19px 'Space Grotesk',sans-serif;margin:0 0 8px}
+.lista.ok{border-top:5px solid #0F7A40}.lista.no{border-top:5px solid #B42318}
+.lista ul{margin:0;padding-left:20px}.lista li{margin:7px 0}
+.fluxo{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+.fl{flex:1;min-width:150px;background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:14px;position:relative}
+.fl b{display:block;font:600 16px 'Space Grotesk',sans-serif;margin-bottom:4px}
+.fl span{font-size:14px;color:#3A404B}
+.fl.hot{border:2px solid #E10600;background:#FFF5F4}
+.seta{align-self:center;font:700 22px Inter;color:#C9CED6}
+@media(max-width:760px){.seta{display:none}}
+.frase{background:#fff;border-left:4px solid #E10600;border-radius:0 12px 12px 0;padding:12px 16px;margin:8px 0;font-size:15.5px}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.links a{display:block;background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:16px;text-decoration:none;color:inherit}
+.links a:hover{border-color:#14171C}
+.links a b{display:block;font:600 17px 'Space Grotesk',sans-serif}
+.links a span{font-size:14px;color:#5B6370}
+.aviso{background:#FFF5F4;border:1px solid #F5C2BE;border-radius:12px;padding:12px 16px;font-size:14.5px;margin-top:12px}
+footer{max-width:1100px;margin:0 auto;padding:0 24px 30px;color:#5B6370;font-size:12px;text-align:right}
+</style>
+</head>
+<body>
+<div class="top"><div class="tin"><img src="axifit-logo-vermelho.png" alt="AxiFit"><div><h1>Guia do lançamento</h1><p>Tudo o que a equipe comercial precisa saber para vender o anual da nova AxiFit</p></div></div>
+<nav><div class="in"><a href="#campanha">A campanha</a><a href="#valores">Valores e benefícios</a><a href="#venda">Passo a passo da venda</a><a href="#indicacao">Indicação e cupons</a><a href="#vale">Vale e não vale</a><a href="#falar">Como falar</a><a href="#links">Links</a></div></nav></div>
+<main>
+
+<section id="campanha">
+  <h2><small>1 · A campanha em 1 minuto</small>Seja membro fundador da nova AxiFit</h2>
+  <div class="hero">
+    <div>
+      <h3>Quem garante o <b>plano anual</b> no lançamento ganha mais de R$ 1.000 em vantagens e concorre a uma <b>scooter elétrica</b>.</h3>
+      <p>A AxiFit está de cara nova: sala de bike indoor, aulas coletivas novas, revisão de treino a cada 21 dias e avaliações tecnológicas.</p>
+      <p>Os valores são por lote. O primeiro lote dura poucos dias e, quando vira, o preço sobe e não volta.</p>
+    </div>
+    <div class="big"><div class="n">Lote 1</div><div class="l">Valor mais baixo do lançamento. Vagas limitadas com condição especial.</div></div>
+  </div>
+</section>
+
+<section id="valores">
+  <h2><small>2 · Valores e benefícios</small>O que o aluno leva no anual</h2>
+  <p class="lead">Os valores são para o atendimento. Preço não vai em mensagem, post nem vídeo.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Lote</th><th>Anual novo (não é aluno)</th><th>Anual renovação (já é aluno)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Lote 1</b> · agora</td><td><b>12x R$ 119,90</b></td><td><b>12x R$ 109,90</b></td></tr>
+      <tr><td>Lote 2</td><td>12x R$ 129,90</td><td>12x R$ 119,90</td></tr>
+      <tr><td>Lote de Inauguração</td><td colspan="2">A definir no fim do Lote 2</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cards" style="margin-top:14px">
+    <div class="card"><div class="t">4 avaliações tecnológicas</div><div class="d">Uma a cada trimestre, exclusiva na região.</div><div class="v">Valem R$ 480 (R$ 120 cada)</div></div>
+    <div class="card"><div class="t">1 mês a mais</div><div class="d">Para usar no próprio plano ou dar de presente para quem ainda não é aluno.</div></div>
+    <div class="card"><div class="t">Scooter elétrica</div><div class="d">Cada anual do lançamento gera um cupom do sorteio, previsto para o fim do ano ou o começo de janeiro.</div></div>
+    <div class="card"><div class="t">Indicação de até 5 amigos</div><div class="d">Cada amigo que garantir o anual vale mais um cupom para quem indicou.</div></div>
+    <div class="card"><div class="t">Bike e aulas coletivas</div><div class="d">Liberadas para todos os alunos. O anual soma as vantagens acima.</div></div>
+  </div>
+  <div class="aviso"><b>Mensal:</b> para aluno novo passa a R$ 170 a partir de 18/11. Quem já é aluno continua pagando o que paga, mas sem avaliações e sem sorteio. Para entrar no sorteio, precisa migrar para o anual.</div>
+</section>
+
+<section id="venda">
+  <h2><small>3 · Passo a passo da venda</small>Do fechamento ao cupom no WhatsApp do aluno</h2>
+  <div class="passos">
+    <div class="passo"><div><div class="t">Lance o plano no SCA primeiro</div><div class="d">Sempre o SCA antes. Ele gera o código da matrícula do aluno (ex.: 2234).</div><span class="onde">SCA</span></div></div>
+    <div class="passo"><div><div class="t">Registre no Hub</div><div class="d">Em "Sorteio e indicações", clique em <b>Registrar anual vendido</b>. Digite a matrícula, o nome e o WhatsApp. Marque <b>Anual novo</b> (não era aluno) ou <b>Anual renovação</b> (já é aluno). O valor do lote entra sozinho.</div><span class="onde">Hub · Sorteio e indicações</span></div></div>
+    <div class="passo"><div><div class="t">O cupom sai na hora</div><div class="d">Clicou em <b>Salvar e gerar cupom</b>, o sistema gera o número do cupom e o código de indicação do aluno (matrícula com as iniciais, ex.: 2234-APS).</div><span class="onde">Automático</span></div></div>
+    <div class="passo"><div><div class="t">Envie o cupom ao aluno</div><div class="d">Na mesma tela: <b>Copiar imagem</b>, <b>Abrir WhatsApp</b> (a mensagem vem pronta, com o link pessoal dele) e cole a imagem na conversa.</div><span class="onde">WhatsApp</span></div></div>
+    <div class="passo"><div><div class="t">Peça para ele indicar ainda no balcão</div><div class="d">"Abre o seu link agora e manda para até 5 amigos que ainda não treinam aqui. Cada um que garantir o anual vale mais um cupom para você."</div><span class="onde">Conversa</span></div></div>
+  </div>
+  <div class="aviso">Aluno com <b>anual antigo</b> que não está comprando agora: use <b>Cadastrar aluno que já tem anual</b>. Ele não ganha cupom de compra, mas recebe o link e ganha cupom pelos amigos.</div>
+</section>
+
+<section id="indicacao">
+  <h2><small>4 · Indicação e cupons</small>Como o link do aluno vira cupom</h2>
+  <div class="fluxo">
+    <div class="fl"><b>Aluno recebe o link</b><span>Abre a página pessoal com o código dele e os cupons.</span></div><div class="seta">›</div>
+    <div class="fl"><b>Envia para até 5 amigos</b><span>Mensagem pronta: presente especial, vaga reservada e condição exclusiva.</span></div><div class="seta">›</div>
+    <div class="fl"><b>Amigo se cadastra</b><span>Garante o presente e fica vinculado a quem indicou. Ainda sem cupom.</span></div><div class="seta">›</div>
+    <div class="fl"><b>Equipe atende o amigo</b><span>Ele aparece na aba Indicações com o nome de quem indicou.</span></div><div class="seta">›</div>
+    <div class="fl hot"><b>Amigo garante o anual</b><span>Ganha o cupom dele, e quem indicou ganha mais um. Na hora.</span></div>
+  </div>
+  <div class="scroll" style="margin-top:16px"><table>
+    <thead><tr><th>Quem</th><th>Cupom pela compra</th><th>Link para indicar</th><th>Cupom pelos amigos</th></tr></thead>
+    <tbody>
+      <tr><td><b>Comprou o anual no lançamento</b> (novo ou renovação)</td><td class="sim">Sim, 1 na hora</td><td class="sim">Sim</td><td class="sim">Sim, até 5</td></tr>
+      <tr><td><b>Já tinha anual antigo</b></td><td class="nao">Não</td><td class="sim">Sim</td><td class="sim">Sim, até 5</td></tr>
+      <tr><td><b>Amigo indicado que comprou o anual</b></td><td class="sim">Sim, o dele</td><td class="sim">Sim, o dele</td><td class="sim">Sim, até 5</td></tr>
+      <tr><td><b>Amigo que só se cadastrou</b></td><td class="nao">Não</td><td class="nao">Não</td><td class="nao">Não</td></tr>
+      <tr><td><b>Aluno do mensal</b> (sem migrar)</td><td class="nao">Não</td><td class="nao">Não</td><td class="nao">Não</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="vale">
+  <h2><small>5 · Vale e não vale</small>As regras do balcão</h2>
+  <div class="duas">
+    <div class="lista ok"><h3>Vale</h3><ul>
+      <li>Anual em 12 parcelas pelo valor do lote atual.</li>
+      <li>Valor de aluno (renovação) para quem está <b>ativo</b>.</li>
+      <li>Exceção: quem venceu em <b>outubro</b> também pega o valor de aluno.</li>
+      <li>Aluno com anual antigo antecipar a renovação pelo valor do lote.</li>
+      <li>Até 5 amigos por aluno contando cupom.</li>
+      <li>Falar em "mais de R$ 1.000 de economia" no Lote 1.</li>
+      <li>Dizer que o sorteio é no fim do ano ou no começo de janeiro.</li>
+    </ul></div>
+    <div class="lista no"><h3>Não vale</h3><ul>
+      <li>Registrar no Hub antes de lançar no SCA.</li>
+      <li>Vender semestral, 3x por semana ou ergometria separada.</li>
+      <li>Valor de aluno para ex-aluno (fora a exceção de outubro).</li>
+      <li>Passar preço por mensagem, áudio ou post. Preço é no atendimento.</li>
+      <li>Prometer data fechada do sorteio ou data de fim do lote.</li>
+      <li>Cupom para quem só se cadastrou ou para quem está no mensal.</li>
+      <li>Mais de 5 amigos contando cupom para a mesma pessoa.</li>
+    </ul></div>
+  </div>
+  <div class="aviso">Trancamento, afastamento médico e cancelamento estão explicados no <a href="termo.html">Termo de matrícula</a>, com respostas prontas para o balcão.</div>
+</section>
+
+<section id="falar">
+  <h2><small>6 · Como falar</small>Frases que funcionam</h2>
+  <div class="frase">"Você chegou no primeiro lote do lançamento. É o valor mais baixo e dura poucos dias."</div>
+  <div class="frase">"No anual você leva 4 avaliações tecnológicas, que custariam R$ 480, mais um mês para usar ou dar de presente. Só aí já são mais de mil reais de economia."</div>
+  <div class="frase">"E ainda concorre a uma scooter elétrica. Cada amigo que você indicar e garantir o anual vale mais um cupom para você."</div>
+  <div class="frase">"Trancar não é parar de pagar. É guardar dias: no anual você tem até 45 dias por ano, e eles voltam no fim do plano."</div>
+</section>
+
+<section id="links">
+  <h2><small>7 · Links</small>Onde fica cada coisa</h2>
+  <div class="links">
+    <a href="cupons.html"><b>Sorteio e indicações</b><span>Registrar anual, gerar e enviar cupom, ver indicações. Entra com o PIN da equipe.</span></a>
+    <a href="captura.html?c=lancamento"><b>Página de cadastro</b><span>O link dos anúncios e do QR Code.</span></a>
+    <a href="termo.html"><b>Termo de matrícula</b><span>Regras do contrato por assunto, trancamento ou afastamento e perguntas frequentes.</span></a>
+  </div>
+</section>
+</main>
+<footer>Metodologia GeFit</footer>
+</body>
+</html>
