@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sorteio e indicações · AxiFit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--bg:#F3F4F6;--card:#fff;--line:#E3E5E9;--ink:#14171C;--mut:#5B6370;--red:#E10600;--red2:#FFF5F4;--blue:#1D4ED8;--ok:#0F7A40;--wa:#0F7A40}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{background:#14171C;color:#fff}
+.topin{max-width:1180px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topin img{height:40px}
+.topin h1{font:600 22px/1.2 'Space Grotesk',sans-serif;margin:0}
+.topin p{margin:2px 0 0;color:#B9BEC7;font-size:13.5px}
+.topin .esp{flex:1}
+.quem{font-size:13px;color:#B9BEC7}
+.tabs{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:0;background:none;color:#B9BEC7;font-weight:500;font-size:14px;padding:11px 14px;border-bottom:3px solid transparent;cursor:pointer}
+.tab.on{color:#fff;border-bottom-color:var(--red)}
+main{max-width:1180px;margin:0 auto;padding:22px 24px 40px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi .n{font:700 28px/1.1 'Space Grotesk',sans-serif}
+.kpi .l{font-size:12.5px;color:var(--mut);margin-top:4px}
+.kpi.hot{border:2px solid var(--red);padding:13px 15px}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.barra .esp{flex:1}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--red);border-color:var(--red);color:#fff}
+.btn.pri:hover{background:#C00500}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+.btn.perigo{color:#B42318;border-color:#F3C1BC}
+.btn:disabled{opacity:.5;cursor:default}
+.busca{flex:1;min-width:220px;max-width:380px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-weight:500;font-size:12.5px;color:var(--mut);padding:10px 12px;white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:middle}
+td .sub{font-size:12.5px;color:var(--mut)}
+.nm{font-weight:600}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.t-novo{background:#E8F5EE;color:var(--ok)}
+.t-upgrade{background:#EEF2FB;color:var(--blue)}
+.t-renovacao{background:#EEF2FB;color:var(--blue)}
+.t-ja_anual{background:#F3F4F6;color:var(--mut)}
+.t-lead{background:#FFF7E6;color:#9A5B00}
+.cupons{font:700 18px 'Space Grotesk',sans-serif}
+.vazio{color:var(--mut);text-align:center;padding:28px}
+.aviso{background:var(--red2);border:1px solid #F5C2BE;border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:14px}
+.regra{background:#14171C;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:14.5px}
+.regra b{color:#FF6B61}
+.pan[hidden]{display:none}
+/* modal */
+.fundo{position:fixed;inset:0;background:rgba(20,23,28,.55);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;overflow:auto;z-index:20}
+.fundo.on{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:640px;padding:22px}
+.modal.lg{max-width:980px}
+.mhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mhead h2{font:600 20px 'Space Grotesk',sans-serif;margin:0;flex:1}
+.x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--mut);line-height:1}
+.campo{margin-bottom:12px}
+.campo label,.campo .lb{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.campo input,.campo select,.campo textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.campo.inv input,.campo.inv select,.campo.inv .ops{outline:2px solid var(--red);outline-offset:1px;border-radius:9px}
+.lin{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ops{display:grid;gap:6px}
+.op{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;font-size:14px}
+.op input{width:auto;flex:none;margin-top:4px;accent-color:#E10600}
+.op small{display:block;color:var(--mut);font-size:12.5px}
+.op:has(input:checked){border-color:var(--red);background:var(--red2)}
+.achados{border:1px solid var(--line);border-radius:10px;max-height:190px;overflow:auto;margin-top:6px}
+.achado{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;border-top:1px solid var(--line);cursor:pointer;font-size:14px}
+.achado:first-child{border-top:0}
+.achado:hover{background:#F7F8FA}
+.selecionado{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#F3F4F6;border-radius:10px;padding:9px 12px;font-size:14px}
+.info{font-size:13px;color:var(--mut)}
+.total{font:600 15px 'Space Grotesk',sans-serif}
+.rodape-m{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.grid2{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:20px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+#arte{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);display:block}
+.passos{counter-reset:p;display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.passos li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.passos li::before{counter-increment:p;content:counter(p);width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font:700 13px 'Space Grotesk',sans-serif}
+.passos .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.msg{white-space:pre-wrap;background:#F3F4F6;border-radius:10px;padding:10px 12px;font-size:13.5px;max-height:210px;overflow:auto}
+.amigos{margin-top:10px;font-size:13.5px}
+.amigos li{margin:3px 0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#14171C;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;display:none;z-index:40}
+.toast.on{display:block}
+.qrbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.qr{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.qr .q{display:inline-block;margin:8px 0}
+.qr .lk{font-size:12px;color:var(--mut);word-break:break-all}
+.gate{max-width:380px;margin:60px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+.gate h2{font:600 20px 'Space Grotesk',sans-serif;margin:0 0 6px}
+footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-size:12px;text-align:right}
+.erro{color:#B42318;font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="topin">
+    <img src="axifit-logo-vermelho.png" alt="AxiFit">
+    <div><h1>Sorteio e indicações</h1><p>Lançamento da nova AxiFit · cupons da scooter elétrica</p></div>
+    <span class="esp"></span>
+    <span class="quem" id="quem"></span>
+  </div>
+  <nav class="tabs" id="tabs" hidden>
+    <button class="tab on" data-tab="participantes">Participantes</button>
+    <button class="tab" data-tab="indicacoes">Indicações</button>
+    <button class="tab" data-tab="links">Links e QR Code</button>
+    <button class="tab" data-tab="equipe">Equipe e acesso</button>
+  </nav>
+</div>
+
+<div id="gate" class="gate" hidden>
+  <h2 id="g-tit">Acesso da equipe</h2>
+  <p class="info" id="g-txt">Digite o PIN da equipe da AxiFit.</p>
+  <div class="campo"><label for="g-pin">PIN</label><input id="g-pin" type="password" inputmode="numeric" autocomplete="off"></div>
+  <div class="campo" id="g-pin2-c" hidden><label for="g-pin2">Repita o PIN</label><input id="g-pin2" type="password" inputmode="numeric" autocomplete="off"></div>
+  <div class="campo"><label for="g-nome">Seu nome</label><input id="g-nome" list="dl-equipe" placeholder="Quem está usando agora"></div>
+  <button class="btn pri" id="g-ok" style="width:100%">Entrar</button>
+  <div class="erro" id="g-erro"></div>
+</div>
+
+<main id="app" hidden>
+  <div class="kpis" id="kpis"></div>
+
+  <section class="pan" id="participantes">
+    <div class="aviso"><b>Primeiro lance o plano no SCA.</b> Depois registre aqui com o código da matrícula. O código de indicação do aluno é a matrícula com as iniciais (ex.: 2234-APS).</div><div class="regra">Cada <b>plano anual vendido no lançamento</b> gera 1 cupom. Cada <b>amigo indicado</b> que garante o anual gera mais 1 cupom para quem indicou, até 5 amigos. Aluno com anual antigo não tem cupom próprio, mas indica e ganha cupom pelos amigos.</div>
+    <div class="barra">
+      <button class="btn pri" onclick="abrirVenda()">Registrar anual vendido</button>
+      <button class="btn" onclick="abrirVenda(null,'ja_anual')">Cadastrar aluno que já tem anual</button>
+      <span class="esp"></span>
+      <input class="busca" id="b-part" placeholder="Buscar por nome, WhatsApp ou código" oninput="renderPart()">
+      <button class="btn" onclick="exportarCupons()">Exportar cupons</button>
+    </div>
+    <div class="card scroll"><table><thead><tr><th>Participante</th><th>Situação</th><th>Venda</th><th>Cupons</th><th>Amigos</th><th>Código</th><th></th></tr></thead><tbody id="tb-part"></tbody></table></div>
+  </section>
+
+  <section class="pan" id="indicacoes" hidden>
+    <p class="info" style="margin-top:0">Pessoas que se cadastraram pelo link de um aluno. Quando uma delas garantir o anual (lançado primeiro no SCA), registre a venda por aqui: o cupom dela e o de quem indicou são gerados na hora.</p>
+    <div class="barra"><input class="busca" id="b-ind" placeholder="Buscar amigo ou quem indicou" oninput="renderInd()"></div>
+    <div class="card scroll"><table><thead><tr><th>Amigo</th><th>Indicado por</th><th>Cadastro</th><th>Situação</th><th></th></tr></thead><tbody id="tb-ind"></tbody></table></div>
+  </section>
+
+  <section class="pan" id="links" hidden>
+    <p class="info" style="margin-top:0">Link geral da página de cadastro do lançamento e um link com QR Code para cada pessoa da equipe. Assim dá para saber quem trouxe cada cadastro.</p>
+    <div class="qrbox" id="qrs"></div>
+  </section>
+
+  <section class="pan" id="equipe" hidden>
+    <div class="card" style="padding:18px;max-width:620px">
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Valores do lançamento</h3>
+      <p class="info" style="margin-top:0">Parcela do anual em 12x por lote. O lote atual já vem marcado no registro da venda.</p>
+      <div class="scroll"><table id="tb-precos"><thead><tr><th>Lote</th><th>Anual novo (R$)</th><th>Anual renovação (R$)</th><th>Lote atual</th></tr></thead><tbody></tbody></table></div>
+      <button class="btn pri" style="margin-top:10px" onclick="salvarPrecos()">Salvar valores</button>
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Equipe comercial</h3>
+      <p class="info" style="margin-top:0">Um nome por linha. Aparecem no registro da venda e nos links com QR Code.</p>
+      <div class="campo"><textarea id="eq-lista" rows="6"></textarea></div>
+      <button class="btn pri" onclick="salvarEquipe()">Salvar equipe</button>
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Trocar o PIN de acesso</h3>
+      <div class="lin"><div class="campo"><label for="pin-n">Novo PIN</label><input id="pin-n" type="password" inputmode="numeric"></div><div class="campo"><label for="pin-n2">Repita</label><input id="pin-n2" type="password" inputmode="numeric"></div></div>
+      <button class="btn" onclick="trocarPin()">Trocar PIN</button>
+    </div>
+  </section>
+</main>
+<footer>Metodologia GeFit</footer>
+
+<datalist id="dl-equipe"></datalist>
+
+<!-- registrar venda -->
+<div class="fundo" id="m-venda"><div class="modal">
+  <div class="mhead"><h2 id="v-tit">Registrar anual vendido</h2><button class="x" onclick="fechar('m-venda')" aria-label="Fechar">×</button></div>
+  <div class="campo" id="v-busca-c">
+    <label for="v-busca">A pessoa já tem cadastro? Busque pelo nome ou WhatsApp</label>
+    <input id="v-busca" placeholder="Ex.: Maria ou 1199999" oninput="buscarCad()" autocomplete="off">
+    <div class="achados" id="v-achados" hidden></div>
+  </div>
+  <div id="v-sel" class="selecionado" hidden></div>
+  <div class="lin" style="margin-top:12px">
+    <div class="campo" data-c="mat"><label for="v-mat">Matrícula no SCA</label><input id="v-mat" inputmode="numeric" placeholder="Ex.: 2234"></div>
+    <div class="campo" data-c="nome"><label for="v-nome">Nome completo</label><input id="v-nome"></div>
+    <div class="campo" data-c="wpp"><label for="v-wpp">WhatsApp</label><input id="v-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
+  </div>
+  <div class="campo" data-c="tipo"><span class="lb">Situação</span>
+    <div class="ops">
+      <label class="op"><input type="radio" name="v-tipo" value="novo"><span>Anual novo<small>Não era aluno da AxiFit. Valor de aluno novo.</small></span></label>
+      <label class="op"><input type="radio" name="v-tipo" value="renovacao"><span>Anual renovação<small>Já é aluno (mensal, outro plano ou anual antigo). Valor de quem já é aluno.</small></span></label>
+      <label class="op"><input type="radio" name="v-tipo" value="ja_anual"><span>Já tem anual vigente, sem compra agora<small>Não ganha cupom de compra. Recebe o link e ganha cupom pelos amigos.</small></span></label>
+    </div>
+  </div>
+  <div id="v-venda">
+    <div class="lin">
+      <div class="campo"><label for="v-lote">Lote</label><select id="v-lote" onchange="precoLote()"><option value="lote1">Lote 1</option><option value="lote2">Lote 2</option><option value="inauguracao">Lote de Inauguração</option></select></div>
+      <div class="campo" data-c="parc"><label for="v-parc">Parcela (R$)</label><input id="v-parc" inputmode="decimal" oninput="calcTotal()"></div>
+      <div class="campo"><label for="v-qtd">Parcelas</label><input id="v-qtd" type="number" min="1" max="12" value="12" oninput="calcTotal()"></div>
+    </div>
+    <p class="total" id="v-total"></p>
+  </div>
+  <div class="lin">
+    <div class="campo"><label for="v-data">Data</label><input id="v-data" type="date"></div>
+    <div class="campo"><label for="v-cons">Consultor</label><input id="v-cons" list="dl-equipe"></div>
+  </div>
+  <div class="campo" id="v-ind-c"><label for="v-ind">Indicado por (opcional)</label><input id="v-ind" list="dl-indicadores" placeholder="Nome ou código de quem indicou"><datalist id="dl-indicadores"></datalist><div class="info" id="v-ind-info"></div></div>
+  <div class="campo"><label for="v-obs">Observação</label><input id="v-obs"></div>
+  <div class="erro" id="v-erro"></div>
+  <div class="rodape-m">
+    <button class="btn perigo" id="v-desfazer" hidden onclick="desfazerVenda()">Desfazer registro</button>
+    <span style="flex:1"></span>
+    <button class="btn" onclick="fechar('m-venda')">Cancelar</button>
+    <button class="btn pri" id="v-salvar" onclick="salvarVenda()">Salvar e gerar cupom</button>
+  </div>
+</div></div>
+
+<!-- cupom -->
+<div class="fundo" id="m-cupom"><div class="modal lg">
+  <div class="mhead"><h2 id="c-tit">Cupom</h2><button class="x" onclick="fechar('m-cupom')" aria-label="Fechar">×</button></div>
+  <div class="grid2">
+    <div><canvas id="arte" width="1080" height="1350"></canvas></div>
+    <div>
+      <ol class="passos">
+        <li><div><b>Copie a imagem do cupom</b><div class="acoes"><button class="btn pri" onclick="copiarImagem()">Copiar imagem</button><button class="btn" onclick="baixarImagem()">Baixar imagem</button></div></div></li>
+        <li><div><b>Abra a conversa com a mensagem pronta</b><div class="acoes"><button class="btn wa" onclick="abrirWhats()">Abrir WhatsApp</button><button class="btn" onclick="copiar(msgAtual,'Mensagem copiada')">Copiar mensagem</button></div></div></li>
+        <li><div><b>Cole a imagem na conversa e envie</b><div class="info">No WhatsApp, use Ctrl+V (ou segure e cole, no celular).</div></div></li>
+      </ol>
+      <div class="lb" style="font-size:13px;font-weight:600;margin:16px 0 6px">Mensagem</div>
+      <div class="msg" id="c-msg"></div>
+      <div class="acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" onclick="copiar(linkAtual,'Link copiado')">Copiar link do aluno</button><button class="btn sm" id="c-editar">Editar registro</button></div>
+      <div class="amigos" id="c-amigos"></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://irwvagffrguiljaxrzmd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlyd3ZhZ2Zmcmd1aWxqYXhyem1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNDk5ODUsImV4cCI6MjEwNDkyNTk4NX0.YAApyaH6iIHEua_89fgCUpMzgXRIcWb_vNRkBQAoq5A';
+const P='axifit_', AC='c240eedb-210a-4b99-afc2-02a466a9defd', SLUG='lancamento', SIGLA='AXI', MAX_AMIGOS=5;
+const PRECO_PADRAO={lote1:{novo:119.9,cliente:109.9},lote2:{novo:129.9,cliente:119.9},inauguracao:{novo:139.9,cliente:129.9}};
+function PRECO(){const p=camp&&camp.precos;return p&&p.lote1?p:PRECO_PADRAO}
+function loteAtual(){return (camp&&camp.lote_atual)||'lote1'}
+const LOTE={lote1:'Lote 1',lote2:'Lote 2',inauguracao:'Lote de Inauguração'};
+const TIPO={novo:'Anual novo',upgrade:'Anual renovação',renovacao:'Anual renovação',ja_anual:'Anual antigo'};
+const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const $=id=>document.getElementById(id);
+let camp=null, leads=[], cupons=[], usuario='', vendaLead=null, vendaTipoFixo=null, leadCupom=null, msgAtual='', linkAtual='';
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function semAcento(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function norm(s){return semAcento(String(s||'')).toLowerCase()}
+function primeiroNome(n){const p=(n||'').trim().split(/\s+/)[0]||'';return p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()}
+function brl(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function num(v){const s=String(v||'').replace(/[^\d,.-]/g,'');if(!s)return NaN;return Number(s.includes(',')?s.replace(/\./g,'').replace(',','.'):s)}
+function nCupom(n){return 'Nº '+String(n).padStart(4,'0')}
+function dataBR(d){if(!d)return '';const s=String(d).slice(0,10).split('-');return s.length===3?s[2]+'/'+s[1]+'/'+s[0]:''}
+function hoje(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600)}
+function sGet(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
+function sSet(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}
+
+async function api(path,opt={}){
+  const r=await fetch(SB_URL+'/rest/v1/'+path,{...opt,headers:{...H,...(opt.headers||{})}});
+  if(!r.ok){const t=await r.text();const e=new Error(t||r.statusText);e.status=r.status;throw e}
+  return r.status===204?null:r.json().catch(()=>null);
+}
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+/* ---------- acesso ---------- */
+async function iniciar(){
+  try{
+    const d=await api(P+'lead_campanhas?slug=eq.'+SLUG+'&select=*&limit=1');
+    camp=d&&d[0];
+  }catch(e){mostrarErroBanco(e);return}
+  if(!camp){mostrarErroBanco(new Error('Campanha "lancamento" não encontrada. Rode o SQL do lançamento.'));return}
+  preencherEquipe();
+  if(sGet('axi_ok')===(camp.acesso_pin_hash||'')&&camp.acesso_pin_hash){usuario=sGet('axi_user')||'';entrar();return}
+  $('gate').hidden=false;
+  if(!camp.acesso_pin_hash){$('g-tit').textContent='Criar o PIN da equipe';$('g-txt').textContent='Primeiro acesso: crie um PIN de 4 a 8 números para a equipe da AxiFit entrar nesta página.';$('g-pin2-c').hidden=false;$('g-ok').textContent='Criar PIN e entrar'}
+  $('g-pin').focus();
+}
+function mostrarErroBanco(e){
+  $('gate').hidden=false;$('g-tit').textContent='Não foi possível abrir';
+  $('g-txt').textContent='A página não conseguiu falar com o banco de dados. Confira a internet. Se for o primeiro uso, o SQL do lançamento ainda precisa ser rodado no Supabase.';
+  ['g-pin','g-nome','g-ok'].forEach(i=>{const el=$(i);(el.closest('.campo')||el).hidden=true});
+  $('g-erro').textContent=String(e.message||e).slice(0,200);
+}
+$('g-ok').onclick=async()=>{
+  const pin=$('g-pin').value.trim();$('g-erro').textContent='';
+  if(!/^\d{4,8}$/.test(pin)){$('g-erro').textContent='O PIN tem de 4 a 8 números.';return}
+  const h=await sha('axifit:'+pin);
+  if(!camp.acesso_pin_hash){
+    if(pin!==$('g-pin2').value.trim()){$('g-erro').textContent='Os dois PINs não são iguais.';return}
+    try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acesso_pin_hash:h})});camp.acesso_pin_hash=h}
+    catch(e){$('g-erro').textContent='Não foi possível salvar o PIN.';return}
+  }else if(h!==camp.acesso_pin_hash){$('g-erro').textContent='PIN incorreto.';return}
+  usuario=$('g-nome').value.trim();sSet('axi_ok',h);sSet('axi_user',usuario);entrar();
+};
+$('g-pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('g-ok').click()});
+async function entrar(){
+  $('gate').hidden=true;$('app').hidden=false;$('tabs').hidden=false;
+  $('quem').textContent=usuario?'Usando: '+usuario:'';
+  await recarregar();
+}
+function renderPrecos(){const p=PRECO(),at=loteAtual();$('tb-precos').querySelector('tbody').innerHTML=Object.keys(LOTE).map(k=>'<tr><td class="nm">'+LOTE[k]+'</td><td><input class="busca" style="min-width:110px" data-k="'+k+'" data-t="novo" value="'+Number(p[k].novo).toFixed(2).replace('.',',')+'"></td><td><input class="busca" style="min-width:110px" data-k="'+k+'" data-t="cliente" value="'+Number(p[k].cliente).toFixed(2).replace('.',',')+'"></td><td><input type="radio" name="lote-atual" value="'+k+'"'+(k===at?' checked':'')+'></td></tr>').join('')}
+async function salvarPrecos(){const p={};let ok=true;document.querySelectorAll('#tb-precos input[data-k]').forEach(i=>{const v=num(i.value);if(!(v>0))ok=false;(p[i.dataset.k]=p[i.dataset.k]||{})[i.dataset.t]=Math.round(v*100)/100});if(!ok){toast('Confira os valores');return}const at=document.querySelector('input[name=lote-atual]:checked')?.value||'lote1';try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({precos:p,lote_atual:at})});camp.precos=p;camp.lote_atual=at;toast('Valores salvos')}catch(e){toast('Não foi possível salvar. Rode o complemento do SQL.')}}
+function preencherEquipe(){renderPrecos();
+  const eq=Array.isArray(camp.equipe)?camp.equipe:[];
+  $('dl-equipe').innerHTML=eq.map(n=>'<option value="'+esc(n)+'">').join('');
+  $('eq-lista').value=eq.join('\n');
+}
+
+/* ---------- dados ---------- */
+async function recarregar(){
+  try{
+    const [l,c]=await Promise.all([
+      api(P+'leads?academia_id=eq.'+AC+'&select=*&order=created_at.asc&limit=10000'),
+      api(P+'cupons?academia_id=eq.'+AC+'&select=*&order=numero.asc&limit=20000')
+    ]);
+    leads=l||[];cupons=c||[];
+  }catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,90));return}
+  renderTudo();
+}
+const ehPart=l=>!!(l.venda_anual||l.venda_tipo==='ja_anual');
+const cuponsDe=l=>cupons.filter(c=>c.lead_id===l.id);
+const amigosDe=l=>l.codigo?leads.filter(x=>x.indicado_por_codigo===l.codigo&&x.id!==l.id):[];
+const valeCupom=x=>!!x.venda_anual;
+const porCodigo=c=>leads.find(x=>x.codigo===c);
+const porId=id=>leads.find(x=>x.id===id);
+
+function renderTudo(){renderKpis();renderPart();renderInd();renderQrs()}
+function renderKpis(){
+  const parts=leads.filter(ehPart),vend=leads.filter(l=>l.venda_anual);
+  const novos=vend.filter(l=>l.venda_tipo==='novo').length,base=vend.length-novos;
+  const indic=leads.filter(l=>l.indicado_por_codigo),indConv=indic.filter(valeCupom);
+  const total=vend.reduce((a,l)=>a+Number(l.venda_total||0),0);
+  const k=[[brl(total).replace(',00',''),'total vendido em anuais (valor dos contratos)',1],[vend.length,'anuais vendidos ('+novos+' novos, '+base+' renovações)',0],[cupons.length,'cupons emitidos',0],[parts.length,'participantes do sorteio',0],[indic.length,'amigos cadastrados por indicação',0],[indConv.length,'amigos indicados que garantiram o anual',0]];
+  $('kpis').innerHTML=k.map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>').join('');
+}
+function linhaVenda(l){
+  if(l.venda_tipo==='ja_anual')return '<span class="sub">Sem compra no lançamento</span>';
+  return '<div>'+esc(LOTE[l.venda_lote]||'')+' · '+(l.venda_parcelas||12)+'x '+brl(l.venda_parcela)+'</div><div class="sub">'+dataBR(l.venda_data)+(l.venda_consultor?' · '+esc(l.venda_consultor):'')+'</div>';
+}
+function renderPart(){
+  const q=norm($('b-part').value),qd=q.replace(/\D/g,'');
+  const rows=leads.filter(ehPart).filter(l=>!q||norm(l.nome).includes(q)||norm(l.codigo).includes(q)||(qd&&(l.whatsapp_norm||'').includes(qd)))
+    .sort((a,b)=>String(b.venda_data||b.updated_at||'').localeCompare(String(a.venda_data||a.updated_at||'')));
+  $('tb-part').innerHTML=rows.length?rows.map(l=>{
+    const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(valeCupom).length;
+    return '<tr><td><div class="nm">'+esc(l.nome)+'</div><div class="sub">'+esc(l.whatsapp||'')+'</div></td>'+
+      '<td><span class="tag t-'+esc(l.venda_tipo)+'">'+esc(TIPO[l.venda_tipo]||'')+'</span></td>'+
+      '<td>'+linhaVenda(l)+'</td>'+
+      '<td><span class="cupons">'+cs.length+'</span><div class="sub">'+cs.map(c=>nCupom(c.numero)).join(', ')+'</div></td>'+
+      '<td><b>'+amc+'</b> de '+MAX_AMIGOS+'<div class="sub">'+am.length+' cadastrado'+(am.length===1?'':'s')+'</div></td>'+
+      '<td><div>'+esc(l.codigo||'')+'</div><div class="sub">'+(l.matricula?'Matrícula '+esc(l.matricula):'')+'</div></td>'+
+      '<td><button class="btn sm pri" onclick="abrirCupom(\''+l.id+'\')">Cupom</button></td></tr>';
+  }).join(''):'<tr><td colspan="7" class="vazio">Nenhum participante ainda. Clique em "Registrar anual vendido".</td></tr>';
+}
+function renderInd(){
+  const q=norm($('b-ind').value);
+  const rows=leads.filter(l=>l.indicado_por_codigo).filter(l=>{const i=porCodigo(l.indicado_por_codigo);return !q||norm(l.nome).includes(q)||norm(i&&i.nome||l.indicado_por_nome).includes(q)||norm(l.indicado_por_codigo).includes(q)})
+    .sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  $('tb-ind').innerHTML=rows.length?rows.map(l=>{
+    const i=porCodigo(l.indicado_por_codigo),c=cupons.find(x=>x.tipo==='indicacao'&&x.indicado_lead_id===l.id);
+    let sit='<span class="tag t-lead">Cadastrado</span>';
+    if(l.venda_anual)sit=c?'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Cupom '+nCupom(c.numero)+' para quem indicou</div>':'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Sem cupom: quem indicou já tem 5 amigos ou não participa</div>';
+    const acao=l.venda_anual?'<button class="btn sm" onclick="abrirCupom(\''+l.id+'\')">Ver cupom</button>':'<button class="btn sm pri" onclick="abrirVenda(\''+l.id+'\')">Registrar anual</button>';
+    return '<tr><td><div class="nm">'+esc(l.nome)+'</div><div class="sub">'+esc(l.whatsapp||'')+'</div></td><td><div>'+esc(i?i.nome:(l.indicado_por_nome||''))+'</div><div class="sub">'+esc(l.indicado_por_codigo)+'</div></td><td class="sub">'+dataBR(l.created_at)+'</td><td>'+sit+'</td><td>'+acao+'</td></tr>';
+  }).join(''):'<tr><td colspan="5" class="vazio">Ainda não há cadastros vindos de indicação.</td></tr>';
+}
+
+/* ---------- links ---------- */
+function baseCaptura(){return new URL('captura.html',location.href.split('#')[0].split('?')[0]).toString()}
+function linkGeral(extra){const u=new URL(baseCaptura());u.searchParams.set('c',SLUG);Object.entries(extra||{}).forEach(([k,v])=>u.searchParams.set(k,v));return u.toString()}
+function linkIndicacao(codigo){return linkGeral({ref:codigo})}
+function linkAluno(codigo){const u=new URL('indicar.html',location.href.split('#')[0].split('?')[0]);u.searchParams.set('c',SLUG);u.searchParams.set('ref',codigo);return u.toString()}
+function renderQrs(){
+  const eq=Array.isArray(camp.equipe)?camp.equipe:[];
+  const itens=[['Link geral do lançamento',linkGeral()],...eq.map(n=>[n,linkGeral({utm_source:'equipe',utm_content:n})])];
+  $('qrs').innerHTML=itens.map((it,i)=>'<div class="qr"><b>'+esc(it[0])+'</b><div class="q" id="qr'+i+'"></div><div class="lk">'+esc(it[1])+'</div><div style="margin-top:8px"><button class="btn sm" data-l="'+esc(it[1])+'" onclick="copiar(this.dataset.l,\'Link copiado\')">Copiar link</button></div></div>').join('')+(eq.length?'':'<div class="qr"><p class="info">Cadastre os nomes da equipe na aba "Equipe e acesso" para gerar um QR Code por pessoa.</p></div>');
+  if(window.QRCode)itens.forEach((it,i)=>{try{new QRCode($('qr'+i),{text:it[1],width:150,height:150,correctLevel:QRCode.CorrectLevel.M})}catch(e){}});
+}
+
+/* ---------- venda ---------- */
+function abrirVenda(id,tipo){
+  vendaLead=id?porId(id):null;vendaTipoFixo=tipo||null;
+  $('v-erro').textContent='';document.querySelectorAll('#m-venda .campo').forEach(c=>c.classList.remove('inv'));
+  $('v-busca').value='';$('v-achados').hidden=true;
+  document.querySelectorAll('input[name=v-tipo]').forEach(r=>r.checked=false);
+  $('v-mat').value='';$('v-lote').value=loteAtual();$('v-qtd').value=12;$('v-parc').value='';$('v-data').value=hoje();$('v-cons').value=usuario||'';$('v-obs').value='';$('v-ind').value='';
+  const l=vendaLead;
+  $('v-desfazer').hidden=!(l&&ehPart(l));$('v-desfazer').dataset.arm='';$('v-desfazer').textContent='Desfazer registro';
+  $('v-tit').textContent=l&&ehPart(l)?'Editar registro':(tipo==='ja_anual'?'Cadastrar aluno que já tem anual':'Registrar anual vendido');
+  if(l){
+    $('v-nome').value=l.nome||'';$('v-wpp').value=l.whatsapp||'';$('v-mat').value=l.matricula||'';
+    if(l.venda_tipo){const r=document.querySelector('input[name=v-tipo][value='+(l.venda_tipo==='upgrade'?'renovacao':l.venda_tipo)+']');if(r)r.checked=true}
+    if(l.venda_lote)$('v-lote').value=l.venda_lote;
+    if(l.venda_parcela)$('v-parc').value=String(l.venda_parcela).replace('.',',');
+    if(l.venda_parcelas)$('v-qtd').value=l.venda_parcelas;
+    if(l.venda_data)$('v-data').value=String(l.venda_data).slice(0,10);
+    if(l.venda_consultor)$('v-cons').value=l.venda_consultor;
+    $('v-obs').value=l.venda_obs||'';
+  }else{$('v-nome').value='';$('v-wpp').value=''}
+  if(tipo){const r=document.querySelector('input[name=v-tipo][value='+tipo+']');if(r)r.checked=true}
+  mostrarSel();tipoMudou();
+  $('dl-indicadores').innerHTML=leads.filter(x=>x.codigo).map(x=>'<option value="'+esc(x.codigo)+'">'+esc(x.nome)+'</option>').join('');
+  abrir('m-venda');
+}
+function mostrarSel(){
+  const l=vendaLead;
+  $('v-busca-c').hidden=!!l;$('v-sel').hidden=!l;
+  if(l){
+    const i=l.indicado_por_codigo&&porCodigo(l.indicado_por_codigo);
+    $('v-sel').innerHTML='<span><b>'+esc(l.nome)+'</b>'+(l.codigo?' · '+esc(l.codigo):'')+(l.indicado_por_codigo?'<br><span class="info">Indicado por '+esc(i?i.nome:(l.indicado_por_nome||''))+' ('+esc(l.indicado_por_codigo)+')</span>':'')+'</span>'+(ehPart(l)?'':'<button class="btn sm" onclick="vendaLead=null;mostrarSel()">Trocar</button>');
+  }
+}
+function buscarCad(){
+  const q=norm($('v-busca').value),qd=q.replace(/\D/g,'');
+  if(q.length<2){$('v-achados').hidden=true;return}
+  const r=leads.filter(l=>norm(l.nome).includes(q)||(qd.length>=4&&(l.whatsapp_norm||'').includes(qd))).slice(0,12);
+  $('v-achados').hidden=false;
+  $('v-achados').innerHTML=r.length?r.map(l=>'<div class="achado" onclick="escolherCad(\''+l.id+'\')"><span><b>'+esc(l.nome)+'</b> <span class="info">'+esc(l.whatsapp||'')+'</span></span><span class="info">'+(ehPart(l)?'já participa':(l.indicado_por_codigo?'indicado':'cadastro'))+'</span></div>').join(''):'<div class="achado" style="cursor:default"><span class="info">Nenhum cadastro encontrado. Preencha os dados abaixo.</span></div>';
+}
+function escolherCad(id){
+  const l=porId(id);if(ehPart(l)){fechar('m-venda');abrirVenda(id);return}
+  vendaLead=l;$('v-nome').value=l.nome||'';$('v-wpp').value=l.whatsapp||'';$('v-achados').hidden=true;mostrarSel();tipoMudou();
+}
+document.querySelectorAll('input[name=v-tipo]').forEach(r=>r.addEventListener('change',()=>{tipoMudou();precoLote();$('[data-c=tipo]')}));
+function tipoAtual(){return document.querySelector('input[name=v-tipo]:checked')?.value||''}
+function tipoMudou(){
+  const t=tipoAtual();
+  $('v-venda').hidden=t==='ja_anual';
+  const temInd=vendaLead&&vendaLead.indicado_por_codigo;
+  $('v-ind-c').hidden=!t||t==='ja_anual'||!!temInd;
+  $('v-salvar').textContent=t==='ja_anual'?'Salvar e gerar link':'Salvar e gerar cupom';
+  if(!$('v-parc').value)precoLote();
+  calcTotal();
+}
+function precoLote(){
+  const t=tipoAtual();if(!t||t==='ja_anual')return;
+  const p=Number(PRECO()[$('v-lote').value][t==='novo'?'novo':'cliente']);
+  $('v-parc').value=p.toFixed(2).replace('.',',');calcTotal();
+}
+function calcTotal(){const p=num($('v-parc').value),q=parseInt($('v-qtd').value,10)||0;$('v-total').textContent=isNaN(p)||!q?'':'Total do contrato: '+brl(p*q)}
+$('v-ind').addEventListener('input',()=>{const v=$('v-ind').value.trim();const i=leads.find(x=>x.codigo&&x.codigo.toUpperCase()===v.toUpperCase());$('v-ind-info').textContent=v?(i?'Quem indicou: '+i.nome+(ehPart(i)?'':' (ainda não participa do sorteio)'):'Código não encontrado. Use a lista de sugestões.'):''});
+$('v-wpp').addEventListener('input',()=>{const w=$('v-wpp');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
+
+function iniciais(nome){const ps=semAcento(nome).toUpperCase().replace(/[^A-Z ]/g,' ').split(/\s+/).filter(p=>p&&!['DA','DE','DO','DAS','DOS','E'].includes(p));return (ps.length>3?[ps[0],ps[1],ps[ps.length-1]]:ps).map(p=>p[0]).join('')||'AX'}
+function codigoBase(nome,mat){return String(mat).trim()+'-'+iniciais(nome)}
+function codigoUnico(base){const usados=new Set(leads.map(x=>x.codigo).filter(Boolean));if(!usados.has(base))return base;for(const ch of 'BCDEFGHJKLMNPQRSTUVWXZ'){if(!usados.has(base+ch))return base+ch}return base+Date.now().toString(36).slice(-3).toUpperCase()}
+
+async function salvarVenda(){
+  const err=$('v-erro');err.textContent='';document.querySelectorAll('#m-venda .campo').forEach(c=>c.classList.remove('inv'));
+  const nome=$('v-nome').value.trim().replace(/\s+/g,' '),dig=$('v-wpp').value.replace(/\D/g,''),t=tipoAtual();
+  const mat=$('v-mat').value.trim().replace(/\s+/g,'');
+  let ok=true;
+  if(!/^[A-Za-z0-9]{1,15}$/.test(mat)){document.querySelector('[data-c=mat]').classList.add('inv');ok=false}
+  if(nome.length<3){document.querySelector('[data-c=nome]').classList.add('inv');ok=false}
+  if(dig.length<10||dig.length>11){document.querySelector('[data-c=wpp]').classList.add('inv');ok=false}
+  if(!t){document.querySelector('[data-c=tipo]').classList.add('inv');ok=false}
+  const parc=num($('v-parc').value),qtd=parseInt($('v-qtd').value,10)||12;
+  if(t&&t!=='ja_anual'&&!(parc>0)){document.querySelector('[data-c=parc]').classList.add('inv');ok=false}
+  if(!ok){err.textContent='Confira os campos marcados.';return}
+  const wn='55'+dig;
+  // mesmo WhatsApp = mesma pessoa
+  let l=vendaLead||leads.find(x=>x.whatsapp_norm===wn)||null;
+  if(!vendaLead&&l&&ehPart(l)){err.textContent='Esse WhatsApp já está registrado como '+l.nome+'. Abra pela lista de participantes para editar.';return}
+  const outroMat=leads.find(x=>x.matricula&&String(x.matricula).toUpperCase()===mat.toUpperCase()&&(!l||x.id!==l.id));
+  if(outroMat){err.textContent='A matrícula '+mat+' já está registrada para '+outroMat.nome+'.';document.querySelector('[data-c=mat]').classList.add('inv');return}
+  let indCod=null;
+  if(t!=='ja_anual'&&!(l&&l.indicado_por_codigo)){
+    const v=$('v-ind').value.trim();
+    if(v){const i=leads.find(x=>x.codigo&&x.codigo.toUpperCase()===v.toUpperCase());if(!i){err.textContent='O código de quem indicou não foi encontrado.';return}if(l&&i.id===l.id){err.textContent='A pessoa não pode indicar a si mesma.';return}indCod=i}
+  }
+  const venda=t==='ja_anual'
+    ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:$('v-cons').value.trim()||null,venda_obs:$('v-obs').value.trim()||null}
+    :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:$('v-cons').value.trim()||null,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
+  const btn=$('v-salvar');btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    let id;
+    if(l){
+      const patch={...venda,matricula:mat,nome,whatsapp:$('v-wpp').value,whatsapp_norm:wn,updated_at:new Date().toISOString()};
+      const novoCod=codigoBase(nome,mat);
+      if(!l.codigo||(l.codigo!==novoCod&&!amigosDe(l).length))patch.codigo=codigoUnico(novoCod);
+      if(indCod){patch.indicado_por_codigo=indCod.codigo;patch.indicado_por_lead=indCod.id;patch.indicado_por_nome=indCod.nome}
+      await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify(patch)});
+      id=l.id;
+    }else{
+      const novo={academia_id:AC,campanha_id:camp.id,campanha_slug:SLUG,nome,whatsapp:$('v-wpp').value,whatsapp_norm:wn,origem:indCod?'indicacao_digital':'balcao',origem_primeira:indCod?'indicacao_digital':'balcao',consentimento:true,matricula:mat,codigo:codigoUnico(codigoBase(nome,mat)),historico:[{data:new Date().toISOString(),campanha:SLUG,origem:'balcao'}],...venda};
+      if(indCod){novo.indicado_por_codigo=indCod.codigo;novo.indicado_por_lead=indCod.id;novo.indicado_por_nome=indCod.nome}
+      const r=await api(P+'leads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(novo)});
+      id=r&&r[0]&&r[0].id;
+    }
+    await recarregar();
+    const eu=porId(id);
+    await sincronizar(eu);
+    if(eu&&eu.indicado_por_codigo){const i=porCodigo(eu.indicado_por_codigo);if(i)await sincronizar(i)}
+    await recarregar();
+    fechar('m-venda');toast('Registro salvo');
+    if(eu)abrirCupom(id);
+  }catch(e){err.textContent='Não foi possível salvar: '+String(e.message).slice(0,160)}
+  finally{btn.disabled=false;tipoMudou()}
+}
+// garante os cupons de uma pessoa: 1 pela compra + 1 por amigo novo que garantiu o anual (até 5)
+async function sincronizar(l){
+  if(!l||!ehPart(l))return;
+  const meus=cuponsDe(l),novos=[];
+  if(l.venda_anual&&l.venda_tipo!=='ja_anual'&&!meus.some(c=>c.tipo==='compra'))novos.push({academia_id:AC,lead_id:l.id,tipo:'compra'});
+  const jaInd=meus.filter(c=>c.tipo==='indicacao');
+  const amigos=amigosDe(l).filter(valeCupom).sort((a,b)=>String(a.venda_data||a.updated_at).localeCompare(String(b.venda_data||b.updated_at)));
+  let vagas=MAX_AMIGOS-jaInd.length;
+  for(const a of amigos){
+    if(vagas<=0)break;
+    if(cupons.some(c=>c.tipo==='indicacao'&&c.indicado_lead_id===a.id))continue;
+    novos.push({academia_id:AC,lead_id:l.id,tipo:'indicacao',indicado_lead_id:a.id});vagas--;
+  }
+  for(const n of novos){
+    try{const r=await api(P+'cupons',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(n)});if(r&&r[0])cupons.push(r[0])}
+    catch(e){if(e.status!==409)throw e}
+  }
+}
+async function desfazerVenda(){
+  const b=$('v-desfazer');
+  if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Clique de novo para confirmar';return}
+  const l=vendaLead;if(!l)return;
+  b.disabled=true;
+  try{
+    const meus=cuponsDe(l);
+    if(meus.length)await api(P+'cupons?lead_id=eq.'+l.id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    // cupom que esta venda tinha gerado para quem indicou
+    const dado=cupons.find(c=>c.tipo==='indicacao'&&c.indicado_lead_id===l.id);
+    if(dado)await api(P+'cupons?id=eq.'+dado.id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({venda_anual:false,venda_tipo:null,venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:null,venda_consultor:null,venda_obs:null,status:'novo',updated_at:new Date().toISOString()})});
+    await recarregar();
+    if(l.indicado_por_codigo){const i=porCodigo(l.indicado_por_codigo);if(i){await sincronizar(i);await recarregar()}}
+    fechar('m-venda');toast('Registro desfeito');
+  }catch(e){$('v-erro').textContent='Não foi possível desfazer: '+String(e.message).slice(0,160)}
+  finally{b.disabled=false}
+}
+
+/* ---------- cupom ---------- */
+let logo=null;
+function carregarLogo(){return new Promise(res=>{if(logo)return res(logo);const i=new Image();i.onload=()=>{logo=i;res(i)};i.onerror=()=>res(null);i.src='axifit-logo-vermelho.png'})}
+function quebrar(ctx,txt,max){const ps=String(txt).split(' '),ls=[];let a='';ps.forEach(p=>{const t=a?a+' '+p:p;if(ctx.measureText(t).width>max&&a){ls.push(a);a=p}else a=t});if(a)ls.push(a);return ls}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+async function desenhar(l){
+  try{await Promise.all([document.fonts.load('700 60px "Space Grotesk", Arial, sans-serif'),document.fonts.load('600 30px Inter, Arial, sans-serif'),document.fonts.load('400 30px Inter, Arial, sans-serif')])}catch(e){}
+  const lg=await carregarLogo();
+  const cv=$('arte'),x=cv.getContext('2d'),W=1080,Hh=1350;
+  const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(valeCupom).length;
+  x.fillStyle='#fff';x.fillRect(0,0,W,Hh);
+  // topo
+  x.fillStyle='#14171C';x.fillRect(0,0,W,300);
+  if(lg){const h=124,w=lg.width*h/lg.height;x.drawImage(lg,60,88,w,h)}
+  x.fillStyle='#fff';x.textAlign='right';x.font='700 54px "Space Grotesk", Arial, sans-serif';x.fillText('CUPOM DO SORTEIO',W-70,140);
+  x.fillStyle='#E10600';rr(x,W-470,170,400,72,14);x.fill();
+  x.fillStyle='#fff';x.font='700 38px "Space Grotesk", Arial, sans-serif';x.textAlign='center';x.fillText('SCOOTER ELÉTRICA',W-270,219);
+  x.fillStyle='#E10600';x.fillRect(0,300,W,10);
+  // nome
+  x.textAlign='left';x.fillStyle='#5B6370';x.font='500 30px Inter, Arial, sans-serif';x.fillText('Participante',70,385);
+  x.fillStyle='#14171C';x.font='700 56px "Space Grotesk", Arial, sans-serif';
+  quebrar(x,l.nome,W-140).slice(0,2).forEach((t,i)=>x.fillText(t,70,450+i*62));
+  let y=l.nome&&quebrar(x,l.nome,W-140).length>1?560:500;
+  x.fillStyle='#5B6370';x.font='400 28px Inter, Arial, sans-serif';
+  x.fillText(l.venda_tipo==='ja_anual'?'Aluno do plano anual da AxiFit':'Plano anual garantido no lançamento da nova AxiFit',70,y);
+  // cupons
+  y+=70;x.fillStyle='#14171C';x.font='600 32px Inter, Arial, sans-serif';x.fillText(cs.length?(cs.length===1?'Seu cupom':'Seus '+cs.length+' cupons'):'Seus cupons',70,y);
+  y+=24;
+  if(cs.length){
+    const bw=300,bh=110,gap=24;let cx=70,cy=y;
+    cs.slice(0,9).forEach((c,i)=>{if(cx+bw>W-70){cx=70;cy+=bh+gap}rr(x,cx,cy,bw,bh,18);x.fillStyle=i===0?'#E10600':'#14171C';x.fill();x.fillStyle='#fff';x.textAlign='center';x.font='700 48px "Space Grotesk", Arial, sans-serif';x.fillText(nCupom(c.numero),cx+bw/2,cy+70);x.textAlign='left';cx+=bw+gap});
+    y=cy+bh+(cs.length>9?40:0);
+    if(cs.length>9){x.fillStyle='#5B6370';x.font='400 26px Inter, Arial, sans-serif';x.fillText('e mais '+(cs.length-9)+' cupons',70,y)}
+  }else{x.fillStyle='#5B6370';x.font='400 28px Inter, Arial, sans-serif';quebrar(x,'Você ganha um cupom para cada amigo indicado que garantir o plano anual no lançamento.',W-140).forEach((t,i)=>x.fillText(t,70,y+40+i*38));y+=110}
+  // indicação
+  y+=60;rr(x,70,y,W-140,300,22);x.fillStyle='#FFF5F4';x.fill();x.strokeStyle='#F5C2BE';x.lineWidth=3;x.stroke();
+  x.fillStyle='#E10600';x.font='700 38px "Space Grotesk", Arial, sans-serif';x.fillText('Ganhe mais cupons',110,y+70);
+  x.fillStyle='#14171C';x.font='400 28px Inter, Arial, sans-serif';
+  quebrar(x,'Envie seu link para até 5 amigos que ainda não treinam na AxiFit. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você.',W-220).forEach((t,i)=>x.fillText(t,110,y+120+i*38));
+  x.font='600 28px Inter, Arial, sans-serif';x.fillText('Seu código: '+(l.codigo||''),110,y+260);
+  x.textAlign='right';x.fillText(amc+' de 5 amigos',W-110,y+260);x.textAlign='left';
+  // rodapé
+  x.fillStyle='#14171C';x.fillRect(0,Hh-130,W,130);
+  x.fillStyle='#fff';x.font='600 26px Inter, Arial, sans-serif';x.fillText('Exclusivo para alunos do plano anual da AxiFit.',70,Hh-78);
+  x.fillStyle='#B9BEC7';x.font='400 24px Inter, Arial, sans-serif';x.fillText('Guarde este cupom. Sorteio conforme o regulamento da campanha.',70,Hh-40);
+}
+function mensagem(l){
+  const nome=primeiroNome(l.nome),cs=cuponsDe(l),link=linkAluno(l.codigo);
+  const nums=cs.map(c=>nCupom(c.numero)).join(', ');
+  const ini=l.venda_tipo==='ja_anual'
+    ?'Olá, '+nome+'! Como você é aluno do plano anual da AxiFit, também pode concorrer à scooter elétrica do lançamento.'
+    :'Olá, '+nome+'! Seu plano anual na nova AxiFit está garantido e você já está concorrendo à scooter elétrica.';
+  return ini+(cs.length?'\n\n'+(cs.length===1?'Seu cupom: ':'Seus cupons: ')+nums:'')+
+    '\n\nQuer mais chances? Abra o seu link pessoal e convide até 5 amigos. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você:\n'+link+
+    '\n\nGuarde esta mensagem. O sorteio segue o regulamento da campanha.';
+}
+async function abrirCupom(id){
+  const l=porId(id);if(!l)return;leadCupom=l;
+  if(!l.codigo&&l.matricula){try{const c=codigoUnico(codigoBase(l.nome,l.matricula));await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({codigo:c})});l.codigo=c}catch(e){}}
+  $('c-tit').textContent='Cupom de '+primeiroNome(l.nome);
+  msgAtual=mensagem(l);linkAtual=linkAluno(l.codigo);$('c-msg').textContent=msgAtual;
+  const am=amigosDe(l);
+  $('c-amigos').innerHTML=am.length?'<b>Amigos indicados</b><ul style="margin:6px 0 0;padding-left:18px">'+am.map(a=>'<li>'+esc(a.nome)+' · '+(valeCupom(a)?'garantiu o anual':(a.venda_anual?'já era aluno':'cadastrado'))+'</li>').join('')+'</ul>':'<span class="info">Nenhum amigo indicado ainda.</span>';
+  $('c-editar').onclick=()=>{fechar('m-cupom');abrirVenda(l.id)};
+  abrir('m-cupom');await desenhar(l);
+}
+function blobArte(){return new Promise(r=>$('arte').toBlob(r,'image/png'))}
+async function copiarImagem(){
+  try{const b=await blobArte();await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);toast('Imagem copiada. Agora abra o WhatsApp e cole.')}
+  catch(e){toast('Este navegador não deixou copiar a imagem. Use "Baixar imagem".')}
+}
+async function baixarImagem(){const b=await blobArte();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cupom-'+(leadCupom&&leadCupom.codigo||'axifit').replace(/[^\w-]/g,'')+'.png';document.body.appendChild(a);a.click();a.remove()}
+function abrirWhats(){const l=leadCupom;if(!l)return;const url='https://wa.me/'+(l.whatsapp_norm||'')+'?text='+encodeURIComponent(msgAtual);const w=window.open(url,'_blank');if(!w)location.href=url}
+async function copiar(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||'Copiado')}catch(e){toast('Não foi possível copiar')}}
+
+/* ---------- exportar ---------- */
+function exportarCupons(){
+  const linhas=[['Cupom','Participante','WhatsApp','Código','Origem do cupom','Amigo que gerou','Data']];
+  cupons.slice().sort((a,b)=>a.numero-b.numero).forEach(c=>{const l=porId(c.lead_id)||{},a=c.indicado_lead_id&&porId(c.indicado_lead_id);linhas.push([nCupom(c.numero),l.nome||'',l.whatsapp||'',l.codigo||'',c.tipo==='compra'?'Compra do anual':'Indicação',a?a.nome:'',dataBR(c.created_at)])});
+  const csv='﻿'+linhas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='cupons-sorteio-axifit.csv';document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ---------- equipe e PIN ---------- */
+async function salvarEquipe(){
+  const eq=[...new Set($('eq-lista').value.split('\n').map(s=>s.trim()).filter(Boolean))];
+  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({equipe:eq})});camp.equipe=eq;preencherEquipe();renderQrs();toast('Equipe salva')}
+  catch(e){toast('Não foi possível salvar a equipe')}
+}
+async function trocarPin(){
+  const a=$('pin-n').value.trim(),b=$('pin-n2').value.trim();
+  if(!/^\d{4,8}$/.test(a)){toast('O PIN tem de 4 a 8 números');return}
+  if(a!==b){toast('Os dois PINs não são iguais');return}
+  const h=await sha('axifit:'+a);
+  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acesso_pin_hash:h})});camp.acesso_pin_hash=h;sSet('axi_ok',h);$('pin-n').value='';$('pin-n2').value='';toast('PIN trocado')}
+  catch(e){toast('Não foi possível trocar o PIN')}
+}
+
+/* ---------- navegação ---------- */
+function abrir(id){$(id).classList.add('on')}
+function fechar(id){$(id).classList.remove('on')}
+document.querySelectorAll('.fundo').forEach(f=>f.addEventListener('mousedown',e=>{if(e.target===f)f.classList.remove('on')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.fundo.on').forEach(f=>f.classList.remove('on'))});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.pan').forEach(p=>p.hidden=p.id!==b.dataset.tab)});
+iniciar();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Meu link de indicação · AxiFit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F3F4F6;color:#14171C;font:16px/1.5 Inter,system-ui,sans-serif}
+.page{max-width:520px;margin:0 auto;min-height:100vh;background:#fff}
+.top{background:#14171C;color:#fff;padding:22px 20px 26px;border-bottom:6px solid #E10600}
+.top img{height:46px;display:block;margin-bottom:16px}
+.top h1{font:700 28px/1.15 'Space Grotesk',sans-serif;margin:0 0 6px}
+.top p{margin:0;color:#B9BEC7;font-size:15px}
+.c{padding:20px 20px calc(30px + env(safe-area-inset-bottom,0px))}
+.cupons{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 18px}
+.cp{background:#14171C;color:#fff;border-radius:10px;padding:8px 14px;font:700 18px 'Space Grotesk',sans-serif}
+.cp:first-child{background:#E10600}
+.lb{font-size:13px;color:#5B6370;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+.cod{border:2px dashed #E10600;border-radius:12px;padding:12px;text-align:center;font:700 24px 'Space Grotesk',sans-serif;letter-spacing:.04em;margin-bottom:18px}
+.box{background:#FFF5F4;border:1px solid #F5C2BE;border-radius:14px;padding:16px;margin-bottom:16px}
+.box h2{font:700 21px/1.2 'Space Grotesk',sans-serif;margin:0 0 6px;color:#E10600}
+.box p{margin:0 0 6px;font-size:15px}
+.prog{display:flex;gap:6px;margin:12px 0 4px}
+.prog i{flex:1;height:10px;border-radius:5px;background:#F5C2BE}
+.prog i.on{background:#E10600}
+.info{font-size:13.5px;color:#5B6370}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:12px;padding:15px;font:700 17px Inter,sans-serif;cursor:pointer;margin-bottom:10px;text-decoration:none}
+.wa{background:#0F7A40;color:#fff}
+.sec{background:#fff;color:#14171C;border:1px solid #E3E5E9}
+.msg{white-space:pre-wrap;background:#F3F4F6;border-radius:12px;padding:12px 14px;font-size:14.5px;margin:6px 0 14px}
+.regras{font-size:13.5px;color:#5B6370;margin:18px 0 0;padding-left:18px}
+.regras li{margin:4px 0}
+.erro{padding:30px 20px;text-align:center;color:#5B6370}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#14171C;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;display:none}
+.toast.on{display:block}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <img src="axifit-logo-vermelho.png" alt="AxiFit">
+    <h1 id="tit">Seu link de indicação</h1>
+    <p id="sub">Lançamento da nova AxiFit · sorteio de uma scooter elétrica</p>
+  </div>
+  <div class="c" id="conteudo"><p class="info">Carregando...</p></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SB_URL='https://irwvagffrguiljaxrzmd.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlyd3ZhZ2Zmcmd1aWxqYXhyem1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNDk5ODUsImV4cCI6MjEwNDkyNTk4NX0.YAApyaH6iIHEua_89fgCUpMzgXRIcWb_vNRkBQAoq5A';
+const P='axifit_', AC='c240eedb-210a-4b99-afc2-02a466a9defd', MAX=5;
+const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+const qs=new URLSearchParams(location.search), REF=(qs.get('ref')||'').trim(), SLUG=(qs.get('c')||'lancamento').trim();
+const $=id=>document.getElementById(id);
+let textoConvite='';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function primeiroNome(n){const p=(n||'').trim().split(/\s+/)[0]||'';return p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()}
+function nCupom(n){return 'Nº '+String(n).padStart(4,'0')}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)}
+async function get(path){const r=await fetch(SB_URL+'/rest/v1/'+path,{headers:H});if(!r.ok)throw new Error(r.status);return r.json()}
+function linkAmigo(){const u=new URL('captura.html',location.href.split('#')[0].split('?')[0]);u.searchParams.set('c',SLUG);u.searchParams.set('ref',REF);return u.toString()}
+
+async function carregar(){
+  if(!REF){$('conteudo').innerHTML='<div class="erro">Link incompleto. Peça o seu link de indicação para a equipe da AxiFit.</div>';return}
+  let eu=null,cs=[],amigos=[];
+  try{
+    const d=await get(P+'leads?academia_id=eq.'+AC+'&codigo=eq.'+encodeURIComponent(REF)+'&select=id,nome,codigo,venda_anual,venda_tipo&limit=1');
+    eu=d[0];
+    if(eu){
+      [cs,amigos]=await Promise.all([
+        get(P+'cupons?lead_id=eq.'+eu.id+'&select=numero,tipo&order=numero.asc'),
+        get(P+'leads?academia_id=eq.'+AC+'&indicado_por_codigo=eq.'+encodeURIComponent(REF)+'&select=id,venda_anual')
+      ]);
+    }
+  }catch(e){$('conteudo').innerHTML='<div class="erro">Não foi possível abrir agora. Confira a internet e tente de novo.</div>';return}
+  if(!eu){$('conteudo').innerHTML='<div class="erro">Não encontramos esse código. Confira o link com a equipe da AxiFit.</div>';return}
+  const nome=primeiroNome(eu.nome), garantiram=Math.min(amigos.filter(a=>a.venda_anual).length,MAX);
+  $('tit').textContent=nome+', este é o seu link de indicação';
+  textoConvite='Oi! Aqui é '+(nome||'um amigo seu')+'. Eu estou na AxiFit e liberei um presente de lançamento para você: uma condição especial no plano anual da nova AxiFit, com sala de bike, aulas novas e avaliações tecnológicas.\n\nÉ super exclusivo e as vagas são muito limitadas. Garanta a sua pelo meu link:\n'+linkAmigo();
+  $('conteudo').innerHTML=
+    (cs.length?'<p class="lb">'+(cs.length===1?'Seu cupom do sorteio':'Seus '+cs.length+' cupons do sorteio')+'</p><div class="cupons">'+cs.map(c=>'<span class="cp">'+nCupom(c.numero)+'</span>').join('')+'</div>'
+      :'<p class="lb">Seus cupons do sorteio</p><p class="info" style="margin:0 0 18px">Você ganha um cupom para cada amigo que garantir o plano anual no lançamento.</p>')+
+    '<p class="lb">Seu código</p><div class="cod">'+esc(eu.codigo)+'</div>'+
+    '<div class="box"><h2>Convide até 5 amigos</h2><p>Envie o convite para amigos que ainda não treinam na AxiFit. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você.</p>'+
+    '<div class="prog">'+Array.from({length:MAX},(_,i)=>'<i class="'+(i<garantiram?'on':'')+'"></i>').join('')+'</div><p class="info" style="margin:0">'+garantiram+' de '+MAX+' amigos já garantiram o anual · '+amigos.length+' cadastrado'+(amigos.length===1?'':'s')+' pelo seu link</p></div>'+
+    '<button class="btn wa" onclick="convidar()">Convidar amigos pelo WhatsApp</button>'+
+    '<button class="btn sec" onclick="copiar()">Copiar convite</button>'+
+    '<p class="lb" style="margin-top:14px">O convite que vai para o seu amigo</p><div class="msg">'+esc(textoConvite)+'</div>'+
+    '<ul class="regras"><li>O seu amigo se cadastra pelo link e fica vinculado a você.</li><li>Quando ele garantir o plano anual no lançamento, ele ganha o cupom dele e você ganha mais um.</li><li>Valem até 5 amigos. O sorteio segue o regulamento da campanha.</li></ul>';
+}
+async function convidar(){
+  if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({text:textoConvite});return}catch(e){if(e&&e.name==='AbortError')return}}
+  const url='https://wa.me/?text='+encodeURIComponent(textoConvite);const w=window.open(url,'_blank');if(!w)location.href=url;
+}
+async function copiar(){try{await navigator.clipboard.writeText(textoConvite);toast('Convite copiado')}catch(e){toast('Não foi possível copiar')}}
+carregar();
+</script>
+</body>
+</html>
