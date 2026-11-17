@@ -178,7 +178,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
       <button class="btn pri" style="margin-top:10px" onclick="salvarPrecos()">Salvar valores</button>
       <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
       <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Acessos da equipe</h3>
-      <p class="info" style="margin-top:0">Cada pessoa entra com o próprio nome e PIN. Consultor registra vendas e envia cupons; a venda fica com o nome de quem registrou. Direção vê tudo, importa planilha, exporta cupons e desfaz registros. Para criar ou trocar o PIN de alguém, digite no campo e salve.</p>
+      <p class="info" style="margin-top:0">Cada pessoa entra com o próprio nome e PIN. Consultor registra vendas e envia cupons; a venda fica com o nome de quem registrou. Liderança e direção veem tudo, importam planilha, exportam cupons e desfazem registros. Para criar ou trocar o PIN de alguém, digite no campo e salve.</p>
       <div class="scroll"><table class="acs"><thead><tr><th>Nome</th><th>Acesso</th><th>Novo PIN</th><th></th></tr></thead><tbody id="tb-acs"></tbody></table></div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" onclick="addAcesso()">Adicionar pessoa</button><button class="btn pri" onclick="salvarAcessos()">Salvar acessos</button></div>
       <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
@@ -314,10 +314,10 @@ async function api(path,opt={}){
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
 /* ---------- acesso ---------- */
-const PAPEL={consultor:'Consultor',direcao:'Direção',admin:'Administrador'};
-const ACESSOS_INICIAIS=[{nome:'Natália',papel:'consultor'},{nome:'Pedro',papel:'consultor'},{nome:'Jéssica',papel:'consultor'},{nome:'Vinícius',papel:'direcao'},{nome:'Damião',papel:'direcao'}];
+const PAPEL={consultor:'Consultor',lideranca:'Liderança',direcao:'Direção',admin:'Administrador'};
+const ACESSOS_INICIAIS=[{nome:'Natália',papel:'consultor'},{nome:'Pedro',papel:'consultor'},{nome:'Jéssica',papel:'consultor'},{nome:'Vinícius',papel:'direcao'},{nome:'Damião',papel:'lideranca'}];
 function acessos(){return Array.isArray(camp&&camp.acessos)?camp.acessos:[]}
-const ehGestor=()=>papel==='direcao'||papel==='admin';
+const ehGestor=()=>['direcao','lideranca','admin'].includes(papel);
 async function hashDe(nome,pin){return sha('axifit:'+norm(nome)+':'+pin)}
 async function iniciar(){
   try{
@@ -388,7 +388,7 @@ function preencherEquipe(){renderPrecos();
   const r=regras();$('rg-qualquer').checked=!!r.ja_anual_qualquer_plano;$('rg-vaga').checked=!!r.vaga_extra;
 }
 function renderAcs(){
-  $('tb-acs').innerHTML=acsEdit.map((a,i)=>'<tr><td><input value="'+esc(a.nome)+'" oninput="acsEdit['+i+'].nome=this.value"></td><td><select onchange="acsEdit['+i+'].papel=this.value"><option value="consultor"'+(a.papel==='consultor'?' selected':'')+'>Consultor</option><option value="direcao"'+(a.papel==='direcao'?' selected':'')+'>Direção</option></select></td><td><input type="password" inputmode="numeric" placeholder="'+(a.pin_hash?'já tem PIN':'criar PIN')+'" oninput="acsEdit['+i+'].pin=this.value"></td><td><button class="btn sm perigo" onclick="acsEdit.splice('+i+',1);renderAcs()">Remover</button></td></tr>').join('');
+  $('tb-acs').innerHTML=acsEdit.map((a,i)=>'<tr><td><input value="'+esc(a.nome)+'" oninput="acsEdit['+i+'].nome=this.value"></td><td><select onchange="acsEdit['+i+'].papel=this.value"><option value="consultor"'+(a.papel==='consultor'?' selected':'')+'>Consultor</option><option value="lideranca"'+(a.papel==='lideranca'?' selected':'')+'>Liderança</option><option value="direcao"'+(a.papel==='direcao'?' selected':'')+'>Direção</option></select></td><td><input type="password" inputmode="numeric" placeholder="'+(a.pin_hash?'já tem PIN':'criar PIN')+'" oninput="acsEdit['+i+'].pin=this.value"></td><td><button class="btn sm perigo" onclick="acsEdit.splice('+i+',1);renderAcs()">Remover</button></td></tr>').join('');
 }
 function addAcesso(){acsEdit.push({nome:'',papel:'consultor',pin:''});renderAcs()}
 async function salvarAcessos(){
@@ -399,7 +399,7 @@ async function salvarAcessos(){
     let h=(a.nome===nome&&a.pin_hash)||null;
     const ant=acessos().find(x=>x.nome===nome);if(!h&&ant)h=ant.pin_hash;
     if(a.pin){if(!/^\d{4,8}$/.test(a.pin)){toast('PIN de '+nome+': 4 a 8 números');return}h=await hashDe(nome,a.pin)}
-    out.push({nome,papel:a.papel==='direcao'?'direcao':'consultor',pin_hash:h||null});
+    out.push({nome,papel:['direcao','lideranca'].includes(a.papel)?a.papel:'consultor',pin_hash:h||null});
   }
   try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acessos:out,equipe:out.map(x=>x.nome)})});camp.acessos=out;camp.equipe=out.map(x=>x.nome);preencherEquipe();renderQrs();
     const sem=out.filter(x=>!x.pin_hash).map(x=>x.nome);toast(sem.length?'Salvo. Ainda sem PIN: '+sem.join(', '):'Acessos salvos')}

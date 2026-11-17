@@ -5,7 +5,7 @@ const AXI={
   P:'axifit_', AC:'c240eedb-210a-4b99-afc2-02a466a9defd', SLUG:'lancamento'
 };
 const $=id=>document.getElementById(id);
-const PAPEL={consultor:'Consultor',direcao:'Direção',admin:'Administrador'};
+const PAPEL={consultor:'Consultor',lideranca:'Liderança',direcao:'Direção',admin:'Administrador'};
 const ETAPAS=[
   {id:'novo',n:'Novos leads',d:'Fila comum, ainda sem contato'},
   {id:'boas_vindas',n:'Boas-vindas enviada',d:'Primeira tentativa feita'},
@@ -32,7 +32,7 @@ function horaBR(d){if(!d)return '';const x=new Date(d);return x.toLocaleTimeStri
 function dataHoraBR(d){if(!d)return '';const x=new Date(d);return x.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+horaBR(d)}
 function toast(t){let e=$('ax-toast');if(!e){e=document.createElement('div');e.id='ax-toast';e.className='ax-toast';document.body.appendChild(e)}e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2800)}
 function sGet(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
-const ehGestor=()=>AX_USER&&(AX_USER.papel==='direcao'||AX_USER.papel==='admin');
+const ehGestor=()=>AX_USER&&['direcao','lideranca','admin'].includes(AX_USER.papel);
 const ehAdmin=()=>AX_USER&&AX_USER.papel==='admin';
 function wpp(n){return n?'https://wa.me/'+n:''}
 
