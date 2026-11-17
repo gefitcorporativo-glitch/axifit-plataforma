@@ -80,7 +80,7 @@ async function carregar(){
   if(!eu){$('conteudo').innerHTML='<div class="erro">Não encontramos esse código. Confira o link com a equipe da AxiFit.</div>';return}
   const nome=primeiroNome(eu.nome), garantiram=Math.min(amigos.filter(a=>a.venda_anual).length,MAX);
   $('tit').textContent=nome+', este é o seu link de indicação';
-  textoConvite='Oi! Aqui é '+(nome||'um amigo seu')+'. Eu estou na AxiFit e liberei um presente de lançamento para você: uma condição especial no plano anual da nova AxiFit, com sala de bike, aulas novas e avaliações tecnológicas.\n\nÉ super exclusivo e as vagas são muito limitadas. Garanta a sua pelo meu link:\n'+linkAmigo();
+  textoConvite='Oi! Aqui é '+(nome||'um amigo seu')+'. Tem um presente especial para você na nova AxiFit: um mapeamento completo da sua saúde, uma vaga reservada no lançamento e uma condição exclusiva que eu liberei para você.\n\nAs vagas são muito limitadas. Cadastre-se pelo meu link para garantir o seu presente:\n'+linkAmigo();
   $('conteudo').innerHTML=
     (cs.length?'<p class="lb">'+(cs.length===1?'Seu cupom do sorteio':'Seus '+cs.length+' cupons do sorteio')+'</p><div class="cupons">'+cs.map(c=>'<span class="cp">'+nCupom(c.numero)+'</span>').join('')+'</div>'
       :'<p class="lb">Seus cupons do sorteio</p><p class="info" style="margin:0 0 18px">Você ganha um cupom para cada amigo que garantir o plano anual no lançamento.</p>')+
@@ -90,7 +90,7 @@ async function carregar(){
     '<button class="btn wa" onclick="convidar()">Convidar amigos pelo WhatsApp</button>'+
     '<button class="btn sec" onclick="copiar()">Copiar convite</button>'+
     '<p class="lb" style="margin-top:14px">O convite que vai para o seu amigo</p><div class="msg">'+esc(textoConvite)+'</div>'+
-    '<ul class="regras"><li>O seu amigo se cadastra pelo link e fica vinculado a você.</li><li>Quando ele garantir o plano anual no lançamento, ele ganha o cupom dele e você ganha mais um.</li><li>Valem até 5 amigos. O sorteio segue o regulamento da campanha.</li></ul>';
+    '<ul class="regras"><li>O seu amigo se cadastra pelo link, garante o presente e fica vinculado a você.</li><li>Quando ele garantir o plano anual no lançamento, ele ganha o cupom dele e você ganha mais um.</li><li>Valem até 5 amigos. O sorteio segue o regulamento da campanha.</li></ul>';
 }
 async function convidar(){
   if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({text:textoConvite});return}catch(e){if(e&&e.name==='AbortError')return}}

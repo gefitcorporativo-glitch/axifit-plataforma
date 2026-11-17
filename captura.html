@@ -195,7 +195,8 @@ const $=id=>document.getElementById(id);
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function primeiroNome(n){const p=(n||'').trim().split(/\s+/)[0]||'';return p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()}
 function semAcento(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')}
-const PRESENTES_PADRAO=['Mapeamento completo de 15 áreas da sua saúde, feito pelo celular em menos de 3 minutos','Consultoria com treinador especialista','Uma Experiência na '+ACADEMIA_CURTA+' para treinar e alcançar resultados em poucos dias'];
+const PRESENTES_PADRAO=['Um presente especial: mapeamento completo da sua saúde','Vaga reservada no lançamento da nova AxiFit, com condição exclusiva','Chance de concorrer a uma scooter elétrica ao garantir o plano anual'];
+const PRESENTES_FIXOS=true; // AxiFit: lista acima vale mesmo se a campanha tiver outra
 
 function aplicarCampanha(c){
   camp=c;
@@ -223,7 +224,7 @@ function aplicarCampanha(c){
 function aplicarConvite(){
   // página do convidado: quem chegou pelo link de alguém
   const nome=indicador?primeiroNome(indicador.nome):'Um amigo';
-  const pres=(camp&&Array.isArray(camp.presentes)&&camp.presentes.length)?camp.presentes:PRESENTES_PADRAO;
+  const pres=(!PRESENTES_FIXOS&&camp&&Array.isArray(camp.presentes)&&camp.presentes.length)?camp.presentes:PRESENTES_PADRAO;
   $('convite-de').textContent=nome+' liberou '+(pres.length===1?'um presente':pres.length+' presentes')+' para você';
   $('presentes').innerHTML=pres.map(p=>'<li>'+esc(p)+'</li>').join('');
   $('convite').classList.remove('hidden');
@@ -231,8 +232,8 @@ function aplicarConvite(){
   $('titulo').textContent='Retire seus presentes';
   $('subtitulo').textContent='Faça seu cadastro em menos de 1 minuto e a nossa equipe fala com você.';
   $('aceite-txt').textContent='Aceito receber contato da '+ACADEMIA_CURTA+' pelo WhatsApp para receber meus presentes.';
-  $('ok-titulo').textContent='Presentes garantidos!';
-  $('ok-texto').textContent='Em breve a nossa equipe chama você no WhatsApp para liberar seus presentes.';
+  $('ok-titulo').textContent='Presente garantido!';
+  $('ok-texto').textContent='Sua vaga no lançamento está reservada. Em breve a equipe da AxiFit chama você no WhatsApp para liberar o seu presente e a condição exclusiva.';
   if(camp&&(camp.evento_texto||camp.evento_mapa)&&eventoAtivo()){
     $('evento-tit').textContent=camp.evento_titulo||'O evento está acontecendo agora';
     $('evento-txt').textContent=camp.evento_texto||'';
