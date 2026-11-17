@@ -66,31 +66,34 @@ function linkAmigo(){const u=new URL('captura.html',location.href.split('#')[0].
 
 async function carregar(){
   if(!REF){$('conteudo').innerHTML='<div class="erro">Link incompleto. Peça o seu link de indicação para a equipe da AxiFit.</div>';return}
-  let eu=null,cs=[],amigos=[];
+  let eu=null,cs=[],amigos=[],rg={};
   try{
     const d=await get(P+'leads?academia_id=eq.'+AC+'&codigo=eq.'+encodeURIComponent(REF)+'&select=id,nome,codigo,venda_anual,venda_tipo&limit=1');
+    try{const c=await get(P+'lead_campanhas?slug=eq.'+encodeURIComponent(SLUG)+'&select=regras&limit=1');rg=(c[0]&&c[0].regras)||{}}catch(e){rg={}}
     eu=d[0];
     if(eu){
       [cs,amigos]=await Promise.all([
         get(P+'cupons?lead_id=eq.'+eu.id+'&select=numero,tipo&order=numero.asc'),
-        get(P+'leads?academia_id=eq.'+AC+'&indicado_por_codigo=eq.'+encodeURIComponent(REF)+'&select=id,venda_anual')
+        get(P+'leads?academia_id=eq.'+AC+'&indicado_por_codigo=eq.'+encodeURIComponent(REF)+'&select=id,venda_anual,venda_tipo')
       ]);
     }
   }catch(e){$('conteudo').innerHTML='<div class="erro">Não foi possível abrir agora. Confira a internet e tente de novo.</div>';return}
   if(!eu){$('conteudo').innerHTML='<div class="erro">Não encontramos esse código. Confira o link com a equipe da AxiFit.</div>';return}
-  const nome=primeiroNome(eu.nome), garantiram=Math.min(amigos.filter(a=>a.venda_anual).length,MAX);
+  const nome=primeiroNome(eu.nome);
+  const conta=a=>a.venda_anual||(rg.ja_anual_qualquer_plano&&eu.venda_tipo==='ja_anual'&&a.venda_tipo==='outro');
+  const extra=!!rg.vaga_extra, comprou=amigos.filter(conta).length, limite=extra?MAX+comprou:MAX, garantiram=Math.min(comprou,limite), abertas=Math.max(0,limite-amigos.length);
   $('tit').textContent=nome+', este é o seu link de indicação';
   textoConvite='Oi! Aqui é '+(nome||'um amigo seu')+'. Tem um presente especial para você na nova AxiFit: um mapeamento completo da sua saúde, uma vaga reservada no lançamento e uma condição exclusiva que eu liberei para você.\n\nAs vagas são muito limitadas. Cadastre-se pelo meu link para garantir o seu presente:\n'+linkAmigo();
   $('conteudo').innerHTML=
     (cs.length?'<p class="lb">'+(cs.length===1?'Seu cupom do sorteio':'Seus '+cs.length+' cupons do sorteio')+'</p><div class="cupons">'+cs.map(c=>'<span class="cp">'+nCupom(c.numero)+'</span>').join('')+'</div>'
       :'<p class="lb">Seus cupons do sorteio</p><p class="info" style="margin:0 0 18px">Você ganha um cupom para cada amigo que garantir o plano anual no lançamento.</p>')+
     '<p class="lb">Seu código</p><div class="cod">'+esc(eu.codigo)+'</div>'+
-    '<div class="box"><h2>Convide até 5 amigos</h2><p>Envie o convite para amigos que ainda não treinam na AxiFit. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você.</p>'+
-    '<div class="prog">'+Array.from({length:MAX},(_,i)=>'<i class="'+(i<garantiram?'on':'')+'"></i>').join('')+'</div><p class="info" style="margin:0">'+garantiram+' de '+MAX+' amigos já garantiram o anual · '+amigos.length+' cadastrado'+(amigos.length===1?'':'s')+' pelo seu link</p></div>'+
+    '<div class="box"><h2>Convide até '+limite+' amigos</h2><p>Envie o convite para amigos que ainda não treinam na AxiFit. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você.'+(extra?' E cada amigo que comprar libera mais uma indicação.':'')+'</p>'+
+    '<div class="prog">'+Array.from({length:limite},(_,i)=>'<i class="'+(i<garantiram?'on':'')+'"></i>').join('')+'</div><p class="info" style="margin:0">'+garantiram+' de '+limite+' amigos já compraram · '+amigos.length+' cadastrado'+(amigos.length===1?'':'s')+' pelo seu link'+(extra?' · '+abertas+' indicaç'+(abertas===1?'ão aberta':'ões abertas'):'')+'</p></div>'+
     '<button class="btn wa" onclick="convidar()">Convidar amigos pelo WhatsApp</button>'+
     '<button class="btn sec" onclick="copiar()">Copiar convite</button>'+
     '<p class="lb" style="margin-top:14px">O convite que vai para o seu amigo</p><div class="msg">'+esc(textoConvite)+'</div>'+
-    '<ul class="regras"><li>O seu amigo se cadastra pelo link, garante o presente e fica vinculado a você.</li><li>Quando ele garantir o plano anual no lançamento, ele ganha o cupom dele e você ganha mais um.</li><li>Valem até 5 amigos. O sorteio segue o regulamento da campanha.</li></ul>';
+    '<ul class="regras"><li>O seu amigo se cadastra pelo link, garante o presente e fica vinculado a você.</li><li>Quando ele garantir o plano anual no lançamento, ele ganha o cupom dele e você ganha mais um.</li><li>'+(extra?'Você começa com 5 indicações e ganha mais uma a cada amigo que compra.':'Valem até 5 amigos.')+' O sorteio segue o regulamento da campanha.</li></ul>';
 }
 async function convidar(){
   if(navigator.share&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({text:textoConvite});return}catch(e){if(e&&e.name==='AbortError')return}}

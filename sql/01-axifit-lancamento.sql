@@ -136,3 +136,9 @@ update axifit_lead_campanhas set indicacao = false where slug = 'lancamento';
 -- 6) Valores iniciais dos lotes (só preenche se ainda estiver vazio)
 update axifit_lead_campanhas set precos = '{"lote1":{"novo":119.9,"cliente":109.9},"lote2":{"novo":129.9,"cliente":119.9},"inauguracao":{"novo":139.9,"cliente":129.9}}'::jsonb
  where slug = 'lancamento' and precos is null;
+
+-- 7) Acessos individuais e regras do sorteio (17/11/2026)
+alter table axifit_lead_campanhas add column if not exists precos jsonb;
+alter table axifit_lead_campanhas add column if not exists lote_atual text default 'lote1';
+alter table axifit_lead_campanhas add column if not exists acessos jsonb default '[]'::jsonb;  -- nome, papel (consultor | direcao) e PIN (SHA-256)
+alter table axifit_lead_campanhas add column if not exists regras jsonb default '{}'::jsonb;   -- chaves liga/desliga do sorteio

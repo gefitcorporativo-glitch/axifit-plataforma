@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#F3F4F6;--card:#fff;--line:#E3E5E9;--ink:#14171C;--mut:#5B6370;--red:#E10600;--red2:#FFF5F4;--blue:#1D4ED8;--ok:#0F7A40;--wa:#0F7A40}
 *{box-sizing:border-box}
@@ -20,6 +21,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topin p{margin:2px 0 0;color:#B9BEC7;font-size:13.5px}
 .topin .esp{flex:1}
 .quem{font-size:13px;color:#B9BEC7}
+.toplink{color:#fff;font-size:13px;font-weight:600;text-decoration:none;border:1px solid #3A404B;border-radius:8px;padding:6px 10px;background:none;cursor:pointer}
+.toplink:hover{border-color:#fff}
+.so-gestor[hidden],.op[hidden]{display:none}
+.chave{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.chave input{width:auto;margin-top:4px;accent-color:#E10600}
+.chave small{display:block;color:var(--mut);font-size:13px}
+.acs td{padding:6px 8px}
+.acs input,.acs select{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.prev td,.prev th{font-size:13px;padding:6px 8px}
 .tabs{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;gap:4px;flex-wrap:wrap}
 .tab{border:0;background:none;color:#B9BEC7;font-weight:500;font-size:14px;padding:11px 14px;border-bottom:3px solid transparent;cursor:pointer}
 .tab.on{color:#fff;border-bottom-color:var(--red)}
@@ -113,22 +123,22 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
     <img src="axifit-logo-vermelho.png" alt="AxiFit">
     <div><h1>Sorteio e indicações</h1><p>Lançamento da nova AxiFit · cupons da scooter elétrica</p></div>
     <span class="esp"></span>
-    <span class="quem" id="quem"></span>
+    <span class="quem" id="quem"></span><a class="toplink" href="guia.html" target="_blank">Guia do lançamento</a><a class="toplink" href="termo.html" target="_blank">Termo de matrícula</a><button class="toplink" id="sair" hidden onclick="sair()">Sair</button>
   </div>
   <nav class="tabs" id="tabs" hidden>
     <button class="tab on" data-tab="participantes">Participantes</button>
     <button class="tab" data-tab="indicacoes">Indicações</button>
     <button class="tab" data-tab="links">Links e QR Code</button>
-    <button class="tab" data-tab="equipe">Equipe e acesso</button>
+    <button class="tab so-gestor" data-tab="equipe">Equipe e acesso</button>
   </nav>
 </div>
 
 <div id="gate" class="gate" hidden>
-  <h2 id="g-tit">Acesso da equipe</h2>
-  <p class="info" id="g-txt">Digite o PIN da equipe da AxiFit.</p>
+  <h2 id="g-tit">Entrar</h2>
+  <p class="info" id="g-txt">Escolha o seu nome e digite o seu PIN.</p>
+  <div class="campo" id="g-quem-c"><label for="g-quem">Quem é você?</label><select id="g-quem"></select></div>
   <div class="campo"><label for="g-pin">PIN</label><input id="g-pin" type="password" inputmode="numeric" autocomplete="off"></div>
   <div class="campo" id="g-pin2-c" hidden><label for="g-pin2">Repita o PIN</label><input id="g-pin2" type="password" inputmode="numeric" autocomplete="off"></div>
-  <div class="campo"><label for="g-nome">Seu nome</label><input id="g-nome" list="dl-equipe" placeholder="Quem está usando agora"></div>
   <button class="btn pri" id="g-ok" style="width:100%">Entrar</button>
   <div class="erro" id="g-erro"></div>
 </div>
@@ -143,7 +153,8 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
       <button class="btn" onclick="abrirVenda(null,'ja_anual')">Cadastrar aluno que já tem anual</button>
       <span class="esp"></span>
       <input class="busca" id="b-part" placeholder="Buscar por nome, WhatsApp ou código" oninput="renderPart()">
-      <button class="btn" onclick="exportarCupons()">Exportar cupons</button>
+      <button class="btn so-gestor" onclick="abrirImport()">Importar anuais do SCA</button>
+      <button class="btn so-gestor" onclick="exportarCupons()">Exportar cupons</button>
     </div>
     <div class="card scroll"><table><thead><tr><th>Participante</th><th>Situação</th><th>Venda</th><th>Cupons</th><th>Amigos</th><th>Código</th><th></th></tr></thead><tbody id="tb-part"></tbody></table></div>
   </section>
@@ -160,20 +171,27 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
   </section>
 
   <section class="pan" id="equipe" hidden>
-    <div class="card" style="padding:18px;max-width:620px">
+    <div class="card" style="padding:18px;max-width:780px">
       <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Valores do lançamento</h3>
       <p class="info" style="margin-top:0">Parcela do anual em 12x por lote. O lote atual já vem marcado no registro da venda.</p>
       <div class="scroll"><table id="tb-precos"><thead><tr><th>Lote</th><th>Anual novo (R$)</th><th>Anual renovação (R$)</th><th>Lote atual</th></tr></thead><tbody></tbody></table></div>
       <button class="btn pri" style="margin-top:10px" onclick="salvarPrecos()">Salvar valores</button>
       <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
-      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Equipe comercial</h3>
-      <p class="info" style="margin-top:0">Um nome por linha. Aparecem no registro da venda e nos links com QR Code.</p>
-      <div class="campo"><textarea id="eq-lista" rows="6"></textarea></div>
-      <button class="btn pri" onclick="salvarEquipe()">Salvar equipe</button>
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Acessos da equipe</h3>
+      <p class="info" style="margin-top:0">Cada pessoa entra com o próprio nome e PIN. Consultor registra vendas e envia cupons; a venda fica com o nome de quem registrou. Direção vê tudo, importa planilha, exporta cupons e desfaz registros. Para criar ou trocar o PIN de alguém, digite no campo e salve.</p>
+      <div class="scroll"><table class="acs"><thead><tr><th>Nome</th><th>Acesso</th><th>Novo PIN</th><th></th></tr></thead><tbody id="tb-acs"></tbody></table></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" onclick="addAcesso()">Adicionar pessoa</button><button class="btn pri" onclick="salvarAcessos()">Salvar acessos</button></div>
       <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
-      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Trocar o PIN de acesso</h3>
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">Regras do sorteio</h3>
+      <p class="info" style="margin-top:0">Ligue quando a direção decidir. Vale para os cupons gerados a partir de então.</p>
+      <label class="chave"><input type="checkbox" id="rg-qualquer"><span><b>Anual antigo ganha cupom com qualquer plano do amigo</b><small>Para quem já tinha anual: o amigo indicado que comprar qualquer plano (mensal, por exemplo) já gera cupom para quem indicou.</small></span></label>
+      <label class="chave"><input type="checkbox" id="rg-vaga"><span><b>Cada amigo que compra libera mais uma indicação</b><small>O aluno começa com 5 indicações e ganha mais uma a cada amigo que compra. Na prática, deixa de ter limite de cupons por indicação.</small></span></label>
+      <button class="btn pri" onclick="salvarRegras()">Salvar regras</button>
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+      <h3 style="font:600 17px 'Space Grotesk',sans-serif;margin:0 0 8px">PIN do administrador</h3>
+      <p class="info" style="margin-top:0">Acesso do Nelson. Serve também se alguém da direção esquecer o PIN.</p>
       <div class="lin"><div class="campo"><label for="pin-n">Novo PIN</label><input id="pin-n" type="password" inputmode="numeric"></div><div class="campo"><label for="pin-n2">Repita</label><input id="pin-n2" type="password" inputmode="numeric"></div></div>
-      <button class="btn" onclick="trocarPin()">Trocar PIN</button>
+      <button class="btn" onclick="trocarPin()">Trocar PIN do administrador</button>
     </div>
   </section>
 </main>
@@ -199,6 +217,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
     <div class="ops">
       <label class="op"><input type="radio" name="v-tipo" value="novo"><span>Anual novo<small>Não era aluno da AxiFit. Valor de aluno novo.</small></span></label>
       <label class="op"><input type="radio" name="v-tipo" value="renovacao"><span>Anual renovação<small>Já é aluno (mensal, outro plano ou anual antigo). Valor de quem já é aluno.</small></span></label>
+      <label class="op" id="op-outro" hidden><input type="radio" name="v-tipo" value="outro"><span>Outro plano (amigo indicado por aluno com anual antigo)<small>Comprou mensal ou outro plano. Não ganha cupom; gera cupom para quem indicou, pela regra da direção.</small></span></label>
       <label class="op"><input type="radio" name="v-tipo" value="ja_anual"><span>Já tem anual vigente, sem compra agora<small>Não ganha cupom de compra. Recebe o link e ganha cupom pelos amigos.</small></span></label>
     </div>
   </div>
@@ -244,6 +263,21 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
   </div>
 </div></div>
 
+<div class="fundo" id="m-import"><div class="modal lg">
+  <div class="mhead"><h2>Importar alunos com anual do SCA</h2><button class="x" onclick="fechar('m-import')" aria-label="Fechar">×</button></div>
+  <p class="info" style="margin-top:0">Exporte do SCA a planilha de quem tem plano anual (Excel ou CSV), com nome, número do cadastro, telefone, início e término do plano. Cada aluno entra como "Anual antigo": sem cupom de compra, com código e link de indicação.</p>
+  <div class="campo"><input type="file" id="imp-arq" accept=".xls,.xlsx,.csv,.html,.htm"></div>
+  <div id="imp-map" hidden>
+    <div class="lin" id="imp-cols"></div>
+    <label class="chave" id="imp-f-anual-c"><input type="checkbox" id="imp-f-anual" checked><span><b>Só linhas com plano anual</b><small>Usa a coluna de plano ou periodicidade.</small></span></label>
+    <label class="chave" id="imp-f-ativo-c"><input type="checkbox" id="imp-f-ativo" checked><span><b>Só alunos ativos</b><small>Usa a coluna de situação (A ou Ativo).</small></span></label>
+    <div class="aviso" id="imp-resumo"></div>
+    <div class="card scroll"><table class="prev"><thead><tr><th>Matrícula</th><th>Nome</th><th>WhatsApp</th><th>Início</th><th>Término</th><th>Situação</th></tr></thead><tbody id="imp-prev"></tbody></table></div>
+  </div>
+  <div class="erro" id="imp-erro"></div>
+  <div class="rodape-m"><button class="btn" onclick="fechar('m-import')">Cancelar</button><button class="btn pri" id="imp-ok" disabled onclick="importar()">Importar</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -257,7 +291,7 @@ const LOTE={lote1:'Lote 1',lote2:'Lote 2',inauguracao:'Lote de Inauguração'};
 const TIPO={novo:'Anual novo',upgrade:'Anual renovação',renovacao:'Anual renovação',ja_anual:'Anual antigo'};
 const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 const $=id=>document.getElementById(id);
-let camp=null, leads=[], cupons=[], usuario='', vendaLead=null, vendaTipoFixo=null, leadCupom=null, msgAtual='', linkAtual='';
+let camp=null, leads=[], cupons=[], usuario='', papel='', imp={rows:[],head:[],map:{}}, vendaLead=null, vendaTipoFixo=null, leadCupom=null, msgAtual='', linkAtual='';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function semAcento(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')}
@@ -280,6 +314,11 @@ async function api(path,opt={}){
 async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 
 /* ---------- acesso ---------- */
+const PAPEL={consultor:'Consultor',direcao:'Direção',admin:'Administrador'};
+const ACESSOS_INICIAIS=[{nome:'Natália',papel:'consultor'},{nome:'Pedro',papel:'consultor'},{nome:'Jéssica',papel:'consultor'},{nome:'Vinícius',papel:'direcao'},{nome:'Damião',papel:'direcao'}];
+function acessos(){return Array.isArray(camp&&camp.acessos)?camp.acessos:[]}
+const ehGestor=()=>papel==='direcao'||papel==='admin';
+async function hashDe(nome,pin){return sha('axifit:'+norm(nome)+':'+pin)}
 async function iniciar(){
   try{
     const d=await api(P+'lead_campanhas?slug=eq.'+SLUG+'&select=*&limit=1');
@@ -287,40 +326,86 @@ async function iniciar(){
   }catch(e){mostrarErroBanco(e);return}
   if(!camp){mostrarErroBanco(new Error('Campanha "lancamento" não encontrada. Rode o SQL do lançamento.'));return}
   preencherEquipe();
-  if(sGet('axi_ok')===(camp.acesso_pin_hash||'')&&camp.acesso_pin_hash){usuario=sGet('axi_user')||'';entrar();return}
+  // sessão salva
+  try{const ss=JSON.parse(sGet('axi_sess')||'null');if(ss){
+    if(ss.papel==='admin'&&camp.acesso_pin_hash&&ss.h===camp.acesso_pin_hash){usuario=ss.nome;papel='admin';entrar();return}
+    const a=acessos().find(x=>x.nome===ss.nome);if(a&&a.pin_hash&&a.pin_hash===ss.h){usuario=a.nome;papel=a.papel;entrar();return}
+  }}catch(e){}
   $('gate').hidden=false;
-  if(!camp.acesso_pin_hash){$('g-tit').textContent='Criar o PIN da equipe';$('g-txt').textContent='Primeiro acesso: crie um PIN de 4 a 8 números para a equipe da AxiFit entrar nesta página.';$('g-pin2-c').hidden=false;$('g-ok').textContent='Criar PIN e entrar'}
-  $('g-pin').focus();
+  if(!camp.acesso_pin_hash){$('g-tit').textContent='Criar o PIN do administrador';$('g-txt').textContent='Primeiro acesso: crie um PIN de 4 a 8 números. Com ele você entra como administrador e cria o acesso de cada pessoa da equipe.';$('g-pin2-c').hidden=false;$('g-quem-c').hidden=true;$('g-ok').textContent='Criar PIN e entrar';$('g-pin').focus();return}
+  const ac=acessos().filter(a=>a.pin_hash);
+  $('g-quem').innerHTML='<option value="">Escolha o seu nome</option>'+ac.map(a=>'<option value="'+esc(a.nome)+'">'+esc(a.nome)+' · '+esc(PAPEL[a.papel]||'')+'</option>').join('')+'<option value="__admin">Administrador (Nelson)</option>';
+  if(!ac.length)$('g-quem').value='__admin';
+  $('g-quem').focus();
 }
 function mostrarErroBanco(e){
   $('gate').hidden=false;$('g-tit').textContent='Não foi possível abrir';
   $('g-txt').textContent='A página não conseguiu falar com o banco de dados. Confira a internet. Se for o primeiro uso, o SQL do lançamento ainda precisa ser rodado no Supabase.';
-  ['g-pin','g-nome','g-ok'].forEach(i=>{const el=$(i);(el.closest('.campo')||el).hidden=true});
+  ['g-pin','g-quem','g-ok'].forEach(i=>{const el=$(i);(el.closest('.campo')||el).hidden=true});
   $('g-erro').textContent=String(e.message||e).slice(0,200);
 }
 $('g-ok').onclick=async()=>{
   const pin=$('g-pin').value.trim();$('g-erro').textContent='';
   if(!/^\d{4,8}$/.test(pin)){$('g-erro').textContent='O PIN tem de 4 a 8 números.';return}
-  const h=await sha('axifit:'+pin);
   if(!camp.acesso_pin_hash){
     if(pin!==$('g-pin2').value.trim()){$('g-erro').textContent='Os dois PINs não são iguais.';return}
+    const h=await sha('axifit:'+pin);
     try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acesso_pin_hash:h})});camp.acesso_pin_hash=h}
     catch(e){$('g-erro').textContent='Não foi possível salvar o PIN.';return}
-  }else if(h!==camp.acesso_pin_hash){$('g-erro').textContent='PIN incorreto.';return}
-  usuario=$('g-nome').value.trim();sSet('axi_ok',h);sSet('axi_user',usuario);entrar();
+    usuario='Administrador';papel='admin';sSet('axi_sess',JSON.stringify({nome:usuario,papel,h}));entrar();return;
+  }
+  const q=$('g-quem').value;
+  if(!q){$('g-erro').textContent='Escolha o seu nome.';return}
+  if(q==='__admin'){
+    const h=await sha('axifit:'+pin);
+    if(h!==camp.acesso_pin_hash){$('g-erro').textContent='PIN incorreto.';return}
+    usuario='Administrador';papel='admin';sSet('axi_sess',JSON.stringify({nome:usuario,papel,h}));entrar();return;
+  }
+  const a=acessos().find(x=>x.nome===q);const h=await hashDe(q,pin);
+  if(!a||a.pin_hash!==h){$('g-erro').textContent='PIN incorreto.';return}
+  usuario=a.nome;papel=a.papel;sSet('axi_sess',JSON.stringify({nome:usuario,papel,h}));entrar();
 };
 $('g-pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('g-ok').click()});
+function sair(){try{sessionStorage.removeItem('axi_sess')}catch(e){}location.reload()}
 async function entrar(){
   $('gate').hidden=true;$('app').hidden=false;$('tabs').hidden=false;
-  $('quem').textContent=usuario?'Usando: '+usuario:'';
+  $('quem').textContent=usuario?usuario+' · '+(PAPEL[papel]||''):'';$('sair').hidden=false;
+  document.querySelectorAll('.so-gestor').forEach(e=>e.hidden=!ehGestor());
   await recarregar();
 }
 function renderPrecos(){const p=PRECO(),at=loteAtual();$('tb-precos').querySelector('tbody').innerHTML=Object.keys(LOTE).map(k=>'<tr><td class="nm">'+LOTE[k]+'</td><td><input class="busca" style="min-width:110px" data-k="'+k+'" data-t="novo" value="'+Number(p[k].novo).toFixed(2).replace('.',',')+'"></td><td><input class="busca" style="min-width:110px" data-k="'+k+'" data-t="cliente" value="'+Number(p[k].cliente).toFixed(2).replace('.',',')+'"></td><td><input type="radio" name="lote-atual" value="'+k+'"'+(k===at?' checked':'')+'></td></tr>').join('')}
 async function salvarPrecos(){const p={};let ok=true;document.querySelectorAll('#tb-precos input[data-k]').forEach(i=>{const v=num(i.value);if(!(v>0))ok=false;(p[i.dataset.k]=p[i.dataset.k]||{})[i.dataset.t]=Math.round(v*100)/100});if(!ok){toast('Confira os valores');return}const at=document.querySelector('input[name=lote-atual]:checked')?.value||'lote1';try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({precos:p,lote_atual:at})});camp.precos=p;camp.lote_atual=at;toast('Valores salvos')}catch(e){toast('Não foi possível salvar. Rode o complemento do SQL.')}}
+function nomesEquipe(){const a=acessos().map(x=>x.nome);return a.length?a:(Array.isArray(camp.equipe)?camp.equipe:[])}
+let acsEdit=[];
 function preencherEquipe(){renderPrecos();
-  const eq=Array.isArray(camp.equipe)?camp.equipe:[];
-  $('dl-equipe').innerHTML=eq.map(n=>'<option value="'+esc(n)+'">').join('');
-  $('eq-lista').value=eq.join('\n');
+  $('dl-equipe').innerHTML=nomesEquipe().map(n=>'<option value="'+esc(n)+'">').join('');
+  acsEdit=(acessos().length?acessos():ACESSOS_INICIAIS).map(a=>({...a,pin:''}));renderAcs();
+  const r=regras();$('rg-qualquer').checked=!!r.ja_anual_qualquer_plano;$('rg-vaga').checked=!!r.vaga_extra;
+}
+function renderAcs(){
+  $('tb-acs').innerHTML=acsEdit.map((a,i)=>'<tr><td><input value="'+esc(a.nome)+'" oninput="acsEdit['+i+'].nome=this.value"></td><td><select onchange="acsEdit['+i+'].papel=this.value"><option value="consultor"'+(a.papel==='consultor'?' selected':'')+'>Consultor</option><option value="direcao"'+(a.papel==='direcao'?' selected':'')+'>Direção</option></select></td><td><input type="password" inputmode="numeric" placeholder="'+(a.pin_hash?'já tem PIN':'criar PIN')+'" oninput="acsEdit['+i+'].pin=this.value"></td><td><button class="btn sm perigo" onclick="acsEdit.splice('+i+',1);renderAcs()">Remover</button></td></tr>').join('');
+}
+function addAcesso(){acsEdit.push({nome:'',papel:'consultor',pin:''});renderAcs()}
+async function salvarAcessos(){
+  const out=[],vistos=new Set();
+  for(const a of acsEdit){
+    const nome=a.nome.trim();if(!nome)continue;
+    if(vistos.has(norm(nome))){toast('Nome repetido: '+nome);return}vistos.add(norm(nome));
+    let h=(a.nome===nome&&a.pin_hash)||null;
+    const ant=acessos().find(x=>x.nome===nome);if(!h&&ant)h=ant.pin_hash;
+    if(a.pin){if(!/^\d{4,8}$/.test(a.pin)){toast('PIN de '+nome+': 4 a 8 números');return}h=await hashDe(nome,a.pin)}
+    out.push({nome,papel:a.papel==='direcao'?'direcao':'consultor',pin_hash:h||null});
+  }
+  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acessos:out,equipe:out.map(x=>x.nome)})});camp.acessos=out;camp.equipe=out.map(x=>x.nome);preencherEquipe();renderQrs();
+    const sem=out.filter(x=>!x.pin_hash).map(x=>x.nome);toast(sem.length?'Salvo. Ainda sem PIN: '+sem.join(', '):'Acessos salvos')}
+  catch(e){toast('Não foi possível salvar. Rode o SQL dos acessos.')}
+}
+function regras(){return (camp&&camp.regras&&typeof camp.regras==='object')?camp.regras:{}}
+async function salvarRegras(){
+  const r={ja_anual_qualquer_plano:$('rg-qualquer').checked,vaga_extra:$('rg-vaga').checked};
+  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({regras:r})});camp.regras=r;
+    for(const l of leads.filter(ehPart))await sincronizar(l);await recarregar();toast('Regras salvas')}
+  catch(e){toast('Não foi possível salvar. Rode o SQL dos acessos.')}
 }
 
 /* ---------- dados ---------- */
@@ -337,7 +422,8 @@ async function recarregar(){
 const ehPart=l=>!!(l.venda_anual||l.venda_tipo==='ja_anual');
 const cuponsDe=l=>cupons.filter(c=>c.lead_id===l.id);
 const amigosDe=l=>l.codigo?leads.filter(x=>x.indicado_por_codigo===l.codigo&&x.id!==l.id):[];
-const valeCupom=x=>!!x.venda_anual;
+const valeCupom=(x,ind)=>!!x.venda_anual||(!!regras().ja_anual_qualquer_plano&&x.venda_tipo==='outro'&&!!ind&&ind.venda_tipo==='ja_anual');
+const maxAmigos=l=>regras().vaga_extra?Infinity:MAX_AMIGOS;
 const porCodigo=c=>leads.find(x=>x.codigo===c);
 const porId=id=>leads.find(x=>x.id===id);
 
@@ -345,13 +431,13 @@ function renderTudo(){renderKpis();renderPart();renderInd();renderQrs()}
 function renderKpis(){
   const parts=leads.filter(ehPart),vend=leads.filter(l=>l.venda_anual);
   const novos=vend.filter(l=>l.venda_tipo==='novo').length,base=vend.length-novos;
-  const indic=leads.filter(l=>l.indicado_por_codigo),indConv=indic.filter(valeCupom);
+  const indic=leads.filter(l=>l.indicado_por_codigo),indConv=indic.filter(l=>l.venda_anual||l.venda_tipo==='outro');
   const total=vend.reduce((a,l)=>a+Number(l.venda_total||0),0);
-  const k=[[brl(total).replace(',00',''),'total vendido em anuais (valor dos contratos)',1],[vend.length,'anuais vendidos ('+novos+' novos, '+base+' renovações)',0],[cupons.length,'cupons emitidos',0],[parts.length,'participantes do sorteio',0],[indic.length,'amigos cadastrados por indicação',0],[indConv.length,'amigos indicados que garantiram o anual',0]];
+  const k=[[brl(total).replace(',00',''),'total vendido em anuais (valor dos contratos)',1],[vend.length,'anuais vendidos ('+novos+' novos, '+base+' renovações)',0],[cupons.length,'cupons emitidos',0],[parts.length,'participantes do sorteio',0],[indic.length,'amigos cadastrados por indicação',0],[indConv.length,'amigos indicados que compraram',0]];
   $('kpis').innerHTML=k.map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>').join('');
 }
 function linhaVenda(l){
-  if(l.venda_tipo==='ja_anual')return '<span class="sub">Sem compra no lançamento</span>';
+  if(l.venda_tipo==='ja_anual'){const r=l.respostas||{};return '<span class="sub">Sem compra no lançamento'+(r.plano_fim?'<br>Anual até '+dataBR(r.plano_fim):'')+'</span>'}
   return '<div>'+esc(LOTE[l.venda_lote]||'')+' · '+(l.venda_parcelas||12)+'x '+brl(l.venda_parcela)+'</div><div class="sub">'+dataBR(l.venda_data)+(l.venda_consultor?' · '+esc(l.venda_consultor):'')+'</div>';
 }
 function renderPart(){
@@ -359,12 +445,12 @@ function renderPart(){
   const rows=leads.filter(ehPart).filter(l=>!q||norm(l.nome).includes(q)||norm(l.codigo).includes(q)||(qd&&(l.whatsapp_norm||'').includes(qd)))
     .sort((a,b)=>String(b.venda_data||b.updated_at||'').localeCompare(String(a.venda_data||a.updated_at||'')));
   $('tb-part').innerHTML=rows.length?rows.map(l=>{
-    const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(valeCupom).length;
+    const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(a=>valeCupom(a,l)).length;
     return '<tr><td><div class="nm">'+esc(l.nome)+'</div><div class="sub">'+esc(l.whatsapp||'')+'</div></td>'+
       '<td><span class="tag t-'+esc(l.venda_tipo)+'">'+esc(TIPO[l.venda_tipo]||'')+'</span></td>'+
       '<td>'+linhaVenda(l)+'</td>'+
       '<td><span class="cupons">'+cs.length+'</span><div class="sub">'+cs.map(c=>nCupom(c.numero)).join(', ')+'</div></td>'+
-      '<td><b>'+amc+'</b> de '+MAX_AMIGOS+'<div class="sub">'+am.length+' cadastrado'+(am.length===1?'':'s')+'</div></td>'+
+      '<td><b>'+amc+'</b>'+(regras().vaga_extra?' compraram':' de '+MAX_AMIGOS)+'<div class="sub">'+am.length+' cadastrado'+(am.length===1?'':'s')+'</div></td>'+
       '<td><div>'+esc(l.codigo||'')+'</div><div class="sub">'+(l.matricula?'Matrícula '+esc(l.matricula):'')+'</div></td>'+
       '<td><button class="btn sm pri" onclick="abrirCupom(\''+l.id+'\')">Cupom</button></td></tr>';
   }).join(''):'<tr><td colspan="7" class="vazio">Nenhum participante ainda. Clique em "Registrar anual vendido".</td></tr>';
@@ -376,8 +462,9 @@ function renderInd(){
   $('tb-ind').innerHTML=rows.length?rows.map(l=>{
     const i=porCodigo(l.indicado_por_codigo),c=cupons.find(x=>x.tipo==='indicacao'&&x.indicado_lead_id===l.id);
     let sit='<span class="tag t-lead">Cadastrado</span>';
-    if(l.venda_anual)sit=c?'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Cupom '+nCupom(c.numero)+' para quem indicou</div>':'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Sem cupom: quem indicou já tem 5 amigos ou não participa</div>';
-    const acao=l.venda_anual?'<button class="btn sm" onclick="abrirCupom(\''+l.id+'\')">Ver cupom</button>':'<button class="btn sm pri" onclick="abrirVenda(\''+l.id+'\')">Registrar anual</button>';
+    if(l.venda_tipo==='outro')sit=c?'<span class="tag t-upgrade">Comprou outro plano</span><div class="sub">Cupom '+nCupom(c.numero)+' para quem indicou</div>':'<span class="tag t-upgrade">Comprou outro plano</span><div class="sub">Só gera cupom se quem indicou tinha anual antigo e a regra estiver ligada</div>';
+    else if(l.venda_anual)sit=c?'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Cupom '+nCupom(c.numero)+' para quem indicou</div>':'<span class="tag t-novo">Garantiu o anual</span><div class="sub">Sem cupom: quem indicou já tem 5 amigos ou não participa</div>';
+    const acao=(l.venda_anual||l.venda_tipo==='outro')?(l.venda_anual?'<button class="btn sm" onclick="abrirCupom(\''+l.id+'\')">Ver cupom</button>':'<button class="btn sm" onclick="abrirVenda(\''+l.id+'\')">Editar</button>'):'<button class="btn sm pri" onclick="abrirVenda(\''+l.id+'\')">Registrar anual</button>';
     return '<tr><td><div class="nm">'+esc(l.nome)+'</div><div class="sub">'+esc(l.whatsapp||'')+'</div></td><td><div>'+esc(i?i.nome:(l.indicado_por_nome||''))+'</div><div class="sub">'+esc(l.indicado_por_codigo)+'</div></td><td class="sub">'+dataBR(l.created_at)+'</td><td>'+sit+'</td><td>'+acao+'</td></tr>';
   }).join(''):'<tr><td colspan="5" class="vazio">Ainda não há cadastros vindos de indicação.</td></tr>';
 }
@@ -388,7 +475,7 @@ function linkGeral(extra){const u=new URL(baseCaptura());u.searchParams.set('c',
 function linkIndicacao(codigo){return linkGeral({ref:codigo})}
 function linkAluno(codigo){const u=new URL('indicar.html',location.href.split('#')[0].split('?')[0]);u.searchParams.set('c',SLUG);u.searchParams.set('ref',codigo);return u.toString()}
 function renderQrs(){
-  const eq=Array.isArray(camp.equipe)?camp.equipe:[];
+  const eq=nomesEquipe();
   const itens=[['Link geral do lançamento',linkGeral()],...eq.map(n=>[n,linkGeral({utm_source:'equipe',utm_content:n})])];
   $('qrs').innerHTML=itens.map((it,i)=>'<div class="qr"><b>'+esc(it[0])+'</b><div class="q" id="qr'+i+'"></div><div class="lk">'+esc(it[1])+'</div><div style="margin-top:8px"><button class="btn sm" data-l="'+esc(it[1])+'" onclick="copiar(this.dataset.l,\'Link copiado\')">Copiar link</button></div></div>').join('')+(eq.length?'':'<div class="qr"><p class="info">Cadastre os nomes da equipe na aba "Equipe e acesso" para gerar um QR Code por pessoa.</p></div>');
   if(window.QRCode)itens.forEach((it,i)=>{try{new QRCode($('qr'+i),{text:it[1],width:150,height:150,correctLevel:QRCode.CorrectLevel.M})}catch(e){}});
@@ -415,6 +502,9 @@ function abrirVenda(id,tipo){
     $('v-obs').value=l.venda_obs||'';
   }else{$('v-nome').value='';$('v-wpp').value=''}
   if(tipo){const r=document.querySelector('input[name=v-tipo][value='+tipo+']');if(r)r.checked=true}
+  $('op-outro').hidden=!(regras().ja_anual_qualquer_plano||(l&&l.venda_tipo==='outro'));
+  if(!ehGestor()){$('v-cons').value=(l&&l.venda_consultor)||usuario;$('v-cons').readOnly=true}else $('v-cons').readOnly=false;
+  $('v-desfazer').hidden=!(ehGestor()&&l&&(ehPart(l)||l.venda_tipo==='outro'));
   mostrarSel();tipoMudou();
   $('dl-indicadores').innerHTML=leads.filter(x=>x.codigo).map(x=>'<option value="'+esc(x.codigo)+'">'+esc(x.nome)+'</option>').join('');
   abrir('m-venda');
@@ -443,14 +533,15 @@ function tipoAtual(){return document.querySelector('input[name=v-tipo]:checked')
 function tipoMudou(){
   const t=tipoAtual();
   $('v-venda').hidden=t==='ja_anual';
+  $('v-lote').closest('.campo').hidden=t==='outro';
   const temInd=vendaLead&&vendaLead.indicado_por_codigo;
   $('v-ind-c').hidden=!t||t==='ja_anual'||!!temInd;
-  $('v-salvar').textContent=t==='ja_anual'?'Salvar e gerar link':'Salvar e gerar cupom';
+  $('v-salvar').textContent=t==='ja_anual'?'Salvar e gerar link':(t==='outro'?'Salvar venda':'Salvar e gerar cupom');
   if(!$('v-parc').value)precoLote();
   calcTotal();
 }
 function precoLote(){
-  const t=tipoAtual();if(!t||t==='ja_anual')return;
+  const t=tipoAtual();if(!t||t==='ja_anual'||t==='outro')return;
   const p=Number(PRECO()[$('v-lote').value][t==='novo'?'novo':'cliente']);
   $('v-parc').value=p.toFixed(2).replace('.',',');calcTotal();
 }
@@ -485,9 +576,13 @@ async function salvarVenda(){
     const v=$('v-ind').value.trim();
     if(v){const i=leads.find(x=>x.codigo&&x.codigo.toUpperCase()===v.toUpperCase());if(!i){err.textContent='O código de quem indicou não foi encontrado.';return}if(l&&i.id===l.id){err.textContent='A pessoa não pode indicar a si mesma.';return}indCod=i}
   }
-  const venda=t==='ja_anual'
-    ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:$('v-cons').value.trim()||null,venda_obs:$('v-obs').value.trim()||null}
-    :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:$('v-cons').value.trim()||null,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
+  if(t==='outro'&&!indCod&&!(l&&l.indicado_por_codigo)){err.textContent='Outro plano só se registra para amigo indicado. Informe quem indicou.';return}
+  const cons=ehGestor()?($('v-cons').value.trim()||usuario||null):usuario;
+  const venda=t==='outro'
+    ?{venda_anual:false,venda_tipo:'outro',venda_lote:null,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null,status:'convertido'}
+    :t==='ja_anual'
+    ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null}
+    :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
   const btn=$('v-salvar');btn.disabled=true;btn.textContent='Salvando...';
   try{
     let id;
@@ -510,7 +605,7 @@ async function salvarVenda(){
     if(eu&&eu.indicado_por_codigo){const i=porCodigo(eu.indicado_por_codigo);if(i)await sincronizar(i)}
     await recarregar();
     fechar('m-venda');toast('Registro salvo');
-    if(eu)abrirCupom(id);
+    if(eu&&ehPart(eu))abrirCupom(id);else if(eu&&eu.indicado_por_codigo){const i=porCodigo(eu.indicado_por_codigo);toast(i&&cuponsDe(i).some(c=>c.indicado_lead_id===eu.id)?'Venda salva. Cupom gerado para '+i.nome:'Venda salva')}
   }catch(e){err.textContent='Não foi possível salvar: '+String(e.message).slice(0,160)}
   finally{btn.disabled=false;tipoMudou()}
 }
@@ -520,8 +615,8 @@ async function sincronizar(l){
   const meus=cuponsDe(l),novos=[];
   if(l.venda_anual&&l.venda_tipo!=='ja_anual'&&!meus.some(c=>c.tipo==='compra'))novos.push({academia_id:AC,lead_id:l.id,tipo:'compra'});
   const jaInd=meus.filter(c=>c.tipo==='indicacao');
-  const amigos=amigosDe(l).filter(valeCupom).sort((a,b)=>String(a.venda_data||a.updated_at).localeCompare(String(b.venda_data||b.updated_at)));
-  let vagas=MAX_AMIGOS-jaInd.length;
+  const amigos=amigosDe(l).filter(a=>valeCupom(a,l)).sort((a,b)=>String(a.venda_data||a.updated_at).localeCompare(String(b.venda_data||b.updated_at)));
+  let vagas=maxAmigos(l)-jaInd.length;
   for(const a of amigos){
     if(vagas<=0)break;
     if(cupons.some(c=>c.tipo==='indicacao'&&c.indicado_lead_id===a.id))continue;
@@ -560,7 +655,7 @@ async function desenhar(l){
   try{await Promise.all([document.fonts.load('700 60px "Space Grotesk", Arial, sans-serif'),document.fonts.load('600 30px Inter, Arial, sans-serif'),document.fonts.load('400 30px Inter, Arial, sans-serif')])}catch(e){}
   const lg=await carregarLogo();
   const cv=$('arte'),x=cv.getContext('2d'),W=1080,Hh=1350;
-  const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(valeCupom).length;
+  const cs=cuponsDe(l),am=amigosDe(l),amc=am.filter(a=>valeCupom(a,l)).length;
   x.fillStyle='#fff';x.fillRect(0,0,W,Hh);
   // topo
   x.fillStyle='#14171C';x.fillRect(0,0,W,300);
@@ -591,7 +686,7 @@ async function desenhar(l){
   x.fillStyle='#14171C';x.font='400 28px Inter, Arial, sans-serif';
   quebrar(x,'Envie seu link para até 5 amigos que ainda não treinam na AxiFit. Cada amigo que garantir o plano anual no lançamento vale mais um cupom para você.',W-220).forEach((t,i)=>x.fillText(t,110,y+120+i*38));
   x.font='600 28px Inter, Arial, sans-serif';x.fillText('Seu código: '+(l.codigo||''),110,y+260);
-  x.textAlign='right';x.fillText(amc+' de 5 amigos',W-110,y+260);x.textAlign='left';
+  x.textAlign='right';x.fillText(regras().vaga_extra?amc+' amigos garantiram':amc+' de 5 amigos',W-110,y+260);x.textAlign='left';
   // rodapé
   x.fillStyle='#14171C';x.fillRect(0,Hh-130,W,130);
   x.fillStyle='#fff';x.font='600 26px Inter, Arial, sans-serif';x.fillText('Exclusivo para alunos do plano anual da AxiFit.',70,Hh-78);
@@ -613,7 +708,7 @@ async function abrirCupom(id){
   $('c-tit').textContent='Cupom de '+primeiroNome(l.nome);
   msgAtual=mensagem(l);linkAtual=linkAluno(l.codigo);$('c-msg').textContent=msgAtual;
   const am=amigosDe(l);
-  $('c-amigos').innerHTML=am.length?'<b>Amigos indicados</b><ul style="margin:6px 0 0;padding-left:18px">'+am.map(a=>'<li>'+esc(a.nome)+' · '+(valeCupom(a)?'garantiu o anual':(a.venda_anual?'já era aluno':'cadastrado'))+'</li>').join('')+'</ul>':'<span class="info">Nenhum amigo indicado ainda.</span>';
+  $('c-amigos').innerHTML=am.length?'<b>Amigos indicados</b><ul style="margin:6px 0 0;padding-left:18px">'+am.map(a=>'<li>'+esc(a.nome)+' · '+(a.venda_anual?'garantiu o anual':(a.venda_tipo==='outro'?'comprou outro plano':'cadastrado'))+'</li>').join('')+'</ul>':'<span class="info">Nenhum amigo indicado ainda.</span>';
   $('c-editar').onclick=()=>{fechar('m-cupom');abrirVenda(l.id)};
   abrir('m-cupom');await desenhar(l);
 }
@@ -626,6 +721,80 @@ async function baixarImagem(){const b=await blobArte();const a=document.createEl
 function abrirWhats(){const l=leadCupom;if(!l)return;const url='https://wa.me/'+(l.whatsapp_norm||'')+'?text='+encodeURIComponent(msgAtual);const w=window.open(url,'_blank');if(!w)location.href=url}
 async function copiar(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||'Copiado')}catch(e){toast('Não foi possível copiar')}}
 
+/* ---------- importar anuais do SCA ---------- */
+const CAMPOS={mat:'Matrícula / cadastro',nome:'Nome',tel:'Telefone / WhatsApp',ini:'Início do plano',fim:'Término do plano',per:'Plano / periodicidade',sit:'Situação'};
+const PISTAS={mat:/^(c[oó]d|matr|cadastro|n[uú]mero|id\b)/i,nome:/nome/i,tel:/(fone|celular|whats|telefone|contato)/i,ini:/in[ií]cio/i,fim:/(fim|t[eé]rmino|vencimento|validade|final)/i,per:/(periodicidade|plano)/i,sit:/situa|status/i};
+function abrirImport(){imp={rows:[],head:[],map:{}};$('imp-arq').value='';$('imp-map').hidden=true;$('imp-erro').textContent='';$('imp-ok').disabled=true;$('imp-ok').textContent='Importar';abrir('m-import')}
+$('imp-arq').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;$('imp-erro').textContent='';
+  if(!window.XLSX){$('imp-erro').textContent='O leitor de planilhas não carregou. Confira a internet e recarregue a página.';return}
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,raw:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const m=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+    const hi=m.findIndex(r=>r.some(c=>/nome/i.test(String(c))));
+    if(hi<0){$('imp-erro').textContent='Não encontrei a linha de títulos (com a coluna Nome).';return}
+    imp.head=m[hi].map(c=>String(c).trim());imp.rows=m.slice(hi+1).filter(r=>r.some(c=>String(c).trim()!==''));
+    imp.map={};Object.keys(CAMPOS).forEach(k=>{let i=-1;if(k==='per')i=imp.head.findIndex(h=>/periodic/i.test(h));if(i<0)i=imp.head.findIndex((h,j)=>PISTAS[k].test(h)&&!Object.values(imp.map).includes(j));imp.map[k]=i});
+    if(imp.map.nome>=0&&imp.map.mat===imp.map.nome)imp.map.mat=-1;
+    $('imp-cols').innerHTML=Object.keys(CAMPOS).map(k=>'<div class="campo"><label>'+CAMPOS[k]+'</label><select data-k="'+k+'" onchange="imp.map[this.dataset.k]=+this.value;prevImport()"><option value="-1">(não tem)</option>'+imp.head.map((h,i)=>'<option value="'+i+'"'+(imp.map[k]===i?' selected':'')+'>'+esc(h||('Coluna '+(i+1)))+'</option>').join('')+'</select></div>').join('');
+    $('imp-map').hidden=false;prevImport();
+  }catch(err){$('imp-erro').textContent='Não consegui ler a planilha: '+String(err.message||err).slice(0,120)}
+});
+['imp-f-anual','imp-f-ativo'].forEach(i=>$(i).addEventListener('change',prevImport));
+function celula(r,k){const i=imp.map[k];return i>=0?r[i]:''}
+function dataISO(v){
+  if(v instanceof Date&&!isNaN(v))return new Date(v.getTime()-v.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  if(typeof v==='number'&&v>20000&&v<80000){const d=new Date(Date.UTC(1899,11,30)+v*864e5);return d.toISOString().slice(0,10)}
+  const s=String(v||'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null;
+}
+function telNorm(v){let d=String(v||'').replace(/\D/g,'');if(d.length>=12&&d.startsWith('55'))d=d.slice(2);if(d.length===10||d.length===11)return d;return ''}
+function telFmt(d){return d?'('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4):''}
+function tituloNome(n){return String(n||'').trim().replace(/\s+/g,' ').toLowerCase().replace(/(^|\s)(\S)/g,(a,b,c)=>b+c.toUpperCase()).replace(/\s(Da|De|Do|Das|Dos|E)\s/g,m=>m.toLowerCase())}
+function linhasImport(){
+  const out=[],mats=new Set(leads.map(l=>String(l.matricula||'').toUpperCase()).filter(Boolean)),tels=new Set(leads.filter(ehPart).map(l=>l.whatsapp_norm).filter(Boolean)),visto=new Set();
+  let lidas=0,filtradas=0,invalidas=0,existentes=0,semTel=0;
+  for(const r of imp.rows){
+    lidas++;
+    const per=String(celula(r,'per')),sit=String(celula(r,'sit')).trim();
+    if($('imp-f-anual').checked&&imp.map.per>=0&&!/anual/i.test(per)){filtradas++;continue}
+    if($('imp-f-ativo').checked&&imp.map.sit>=0&&!/^(a|ativ)/i.test(sit)){filtradas++;continue}
+    const mat=String(celula(r,'mat')).trim().replace(/\.0$/,''),nome=tituloNome(celula(r,'nome'));
+    if(!mat||!/^[A-Za-z0-9]{1,15}$/.test(mat)||nome.length<3){invalidas++;continue}
+    const tel=telNorm(celula(r,'tel'));
+    if(mats.has(mat.toUpperCase())||(tel&&tels.has('55'+tel))||visto.has(mat.toUpperCase())){existentes++;continue}
+    visto.add(mat.toUpperCase());if(!tel)semTel++;
+    out.push({mat,nome,tel,ini:dataISO(celula(r,'ini')),fim:dataISO(celula(r,'fim')),per:per.trim(),sit});
+  }
+  return {out,lidas,filtradas,invalidas,existentes,semTel};
+}
+function prevImport(){
+  const ok=imp.map.mat>=0&&imp.map.nome>=0;
+  $('imp-f-anual-c').hidden=!(imp.map.per>=0);$('imp-f-ativo-c').hidden=!(imp.map.sit>=0);
+  if(!ok){$('imp-resumo').textContent='Escolha ao menos as colunas de matrícula e nome.';$('imp-prev').innerHTML='';$('imp-ok').disabled=true;return}
+  const r=linhasImport();
+  $('imp-resumo').innerHTML='<b>'+r.out.length+' alunos para importar.</b> '+r.lidas+' linhas lidas'+(r.filtradas?' · '+r.filtradas+' fora do filtro':'')+(r.existentes?' · '+r.existentes+' já estão no Hub':'')+(r.invalidas?' · '+r.invalidas+' sem matrícula ou nome':'')+(r.semTel?' · <b>'+r.semTel+' sem telefone</b> (entram, mas sem WhatsApp para enviar o link)':'')+'.';
+  $('imp-prev').innerHTML=r.out.slice(0,8).map(x=>'<tr><td>'+esc(x.mat)+'</td><td>'+esc(x.nome)+'</td><td>'+esc(telFmt(x.tel)||'sem telefone')+'</td><td>'+dataBR(x.ini)+'</td><td>'+dataBR(x.fim)+'</td><td>'+esc(x.sit)+'</td></tr>').join('')+(r.out.length>8?'<tr><td colspan="6" class="sub">e mais '+(r.out.length-8)+'</td></tr>':'');
+  $('imp-ok').disabled=!r.out.length;$('imp-ok').textContent='Importar '+r.out.length+' alunos';
+}
+async function importar(){
+  const r=linhasImport();if(!r.out.length)return;
+  const b=$('imp-ok');b.disabled=true;$('imp-erro').textContent='';
+  const usados=new Set(leads.map(x=>x.codigo).filter(Boolean));
+  const linhas=r.out.map(x=>{let c=codigoBase(x.nome,x.mat);if(usados.has(c)){for(const ch of 'BCDEFGHJKLMNPQRSTUVWXZ'){if(!usados.has(c+ch)){c=c+ch;break}}}usados.add(c);
+    return {academia_id:AC,campanha_id:camp.id,campanha_slug:SLUG,nome:x.nome,whatsapp:x.tel?telFmt(x.tel):null,whatsapp_norm:x.tel?'55'+x.tel:null,matricula:x.mat,codigo:c,venda_anual:false,venda_tipo:'ja_anual',venda_data:hoje(),venda_consultor:usuario||null,status:'aluno',origem:'base_sca',origem_primeira:'base_sca',consentimento:false,respostas:{plano:x.per,plano_inicio:x.ini,plano_fim:x.fim},historico:[{data:new Date().toISOString(),campanha:SLUG,origem:'importacao_sca',por:usuario}]}});
+  let feitos=0;
+  try{
+    for(let i=0;i<linhas.length;i+=100){
+      const lote=linhas.slice(i,i+100);b.textContent='Importando '+(i+lote.length)+' de '+linhas.length+'...';
+      await api(P+'leads',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify(lote)});feitos+=lote.length;
+    }
+    await recarregar();fechar('m-import');toast(feitos+' alunos importados');
+  }catch(e){await recarregar();$('imp-erro').textContent='Parou depois de '+feitos+' alunos: '+String(e.message).slice(0,140)+'. Escolha o arquivo de novo para importar o restante.';b.disabled=false;b.textContent='Importar'}
+}
+
 /* ---------- exportar ---------- */
 function exportarCupons(){
   const linhas=[['Cupom','Participante','WhatsApp','Código','Origem do cupom','Amigo que gerou','Data']];
@@ -635,17 +804,12 @@ function exportarCupons(){
 }
 
 /* ---------- equipe e PIN ---------- */
-async function salvarEquipe(){
-  const eq=[...new Set($('eq-lista').value.split('\n').map(s=>s.trim()).filter(Boolean))];
-  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({equipe:eq})});camp.equipe=eq;preencherEquipe();renderQrs();toast('Equipe salva')}
-  catch(e){toast('Não foi possível salvar a equipe')}
-}
 async function trocarPin(){
   const a=$('pin-n').value.trim(),b=$('pin-n2').value.trim();
   if(!/^\d{4,8}$/.test(a)){toast('O PIN tem de 4 a 8 números');return}
   if(a!==b){toast('Os dois PINs não são iguais');return}
   const h=await sha('axifit:'+a);
-  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acesso_pin_hash:h})});camp.acesso_pin_hash=h;sSet('axi_ok',h);$('pin-n').value='';$('pin-n2').value='';toast('PIN trocado')}
+  try{await api(P+'lead_campanhas?id=eq.'+camp.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({acesso_pin_hash:h})});camp.acesso_pin_hash=h;if(papel==='admin')sSet('axi_sess',JSON.stringify({nome:usuario,papel,h}));$('pin-n').value='';$('pin-n2').value='';toast('PIN trocado')}
   catch(e){toast('Não foi possível trocar o PIN')}
 }
 
