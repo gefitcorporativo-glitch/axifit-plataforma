@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Missões e Lançar dia · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.sel{padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.duas{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:980px){.duas{grid-template-columns:1fr}}
+.bloco{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.bloco h3{font:600 16px 'Space Grotesk',sans-serif;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.bloco h3 .q{margin-left:auto;font:700 18px 'Space Grotesk',sans-serif}
+.bloco.red{border-left:5px solid #B42318}.bloco.amb{border-left:5px solid #D97706}.bloco.blu{border-left:5px solid var(--blue)}
+.it{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.it:first-of-type{border-top:0}.it .nm{font-weight:600}.it .esp{flex:1}
+.vazio{color:var(--mut);font-size:13.5px}
+.form .lin3{display:grid;grid-template-columns:1fr 110px 90px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.form .lin3:first-child{border-top:0}
+.form .lin3 label{font-size:14px;font-weight:500}.form .lin3 label small{display:block;color:var(--mut);font-weight:400;font-size:12px}
+.form input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;text-align:right}
+.sis{font-size:12.5px;color:var(--mut);text-align:right}
+.sis.dif{color:#B42318;font-weight:700}
+.grp{font:600 12px Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--red);margin:14px 0 2px}
+</style>
+</head>
+<body>
+<main class="ax-main">
+  <div class="barra">
+    <label class="info">Consultor</label><select class="sel" id="cons"></select>
+    <label class="info">Dia</label><input class="sel" type="date" id="dia">
+    <span class="info" id="obs-auto"></span>
+  </div>
+  <div class="duas">
+    <section>
+      <h2 class="sec" style="margin-top:0">Missões do dia</h2>
+      <div id="missoes"></div>
+    </section>
+    <section>
+      <h2 class="sec" style="margin-top:0">Lançar dia</h2>
+      <div class="bloco form">
+        <p class="info" style="margin-top:0">Lance no fim do dia o que foi feito. Primeira tentativa é o primeiro contato com a pessoa (ligação, mensagem ou os dois no mesmo dia contam uma vez). Da segunda em diante é cadência.</p>
+        <div id="campos"></div>
+        <div class="campo" style="margin-top:10px"><label for="f-obs">Observações do dia</label><textarea id="f-obs" rows="2"></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn pri" onclick="salvarDia()">Salvar o dia</button>
+          <button class="btn" id="b-auto" hidden onclick="usarSistema()">Preencher com o que o sistema contou</button>
+        </div>
+        <div class="erro" id="f-erro"></div>
+      </div>
+      <h2 class="sec">Últimos lançamentos</h2>
+      <div class="card scroll"><table><thead id="h-head"></thead><tbody id="h-body"></tbody></table></div>
+    </section>
+  </div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+const CAMPOS=[
+  ['g','Contatos'],
+  ['primeiras','Primeiras tentativas','primeiro contato com a pessoa'],
+  ['cadencia','Cadência','segunda tentativa em diante'],
+  ['efetivos','Contatos efetivos','conseguiu falar'],
+  ['g','Agendamentos'],
+  ['visitas','Visitas agendadas'],
+  ['consultorias','Consultorias agendadas'],
+  ['experiencias','Experiências agendadas'],
+  ['compareceram','Compareceram'],
+  ['g','Vendas'],
+  ['anual_novo','Anuais novos'],
+  ['anual_renov','Anuais renovação'],
+  ['mensais','Mensais ou outros planos']
+];
+let leads=[],lanc=[],sistema={};
+(async function(){
+  await axEntrar('dia.html');
+  axTopo('Missões e Lançar dia','O que fazer hoje e o que foi feito','dia.html');
+  const eq=axEquipe();
+  $('cons').innerHTML=(ehGestor()?eq:[AX_USER.nome]).map(n=>'<option'+(n===AX_USER.nome?' selected':'')+'>'+esc(n)+'</option>').join('')||'<option>'+esc(AX_USER.nome)+'</option>';
+  if(ehGestor()&&!eq.includes(AX_USER.nome))$('cons').insertAdjacentHTML('afterbegin','<option value="__todos">Toda a equipe</option>');
+  if(ehGestor()&&AX_USER.papel==='admin')$('cons').value='__todos';
+  $('cons').disabled=!ehGestor();
+  $('dia').value=hoje();
+  $('campos').innerHTML=CAMPOS.map(c=>c[0]==='g'?'<div class="grp">'+c[1]+'</div>':'<div class="lin3"><label for="f-'+c[0]+'">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</label><input type="number" min="0" step="1" id="f-'+c[0]+'"><span class="sis" id="s-'+c[0]+'"></span></div>').join('');
+  $('cons').onchange=atualizar;$('dia').onchange=atualizar;
+  await carregar();
+})();
+async function carregar(){
+  try{
+    const [l,d]=await Promise.all([axLeads(),axApi(AXI.P+'lancamentos_dia?academia_id=eq.'+AXI.AC+'&select=*&order=data.desc&limit=500')]);
+    leads=l;lanc=d||[];
+  }catch(e){$('missoes').innerHTML='<div class="aviso">Não foi possível carregar. Se for o primeiro uso, rode o SQL da Central de Leads e do Lançar dia.<br><small>'+esc(String(e.message).slice(0,160))+'</small></div>';return}
+  atualizar();
+}
+function consSel(){return $('cons').value}
+const doCons=(l,c)=>c==='__todos'||l.consultora_id===c;
+function contarSistema(c,dia){
+  const s={primeiras:0,cadencia:0,efetivos:0,visitas:0,consultorias:0,experiencias:0,compareceram:0,anual_novo:0,anual_renov:0,mensais:0};
+  for(const l of leads){
+    const t=tentativasDe(l);
+    // primeira tentativa: o primeiro registro com contato real; ligação + mensagem no mesmo dia contam uma vez
+    const reais=t.filter(x=>x.canal&&x.canal!=='nenhum');
+    const diasComContato=[...new Set(reais.map(x=>iso(x.em)))].sort();
+    reais.forEach(x=>{
+      if(iso(x.em)!==dia||!(c==='__todos'||x.por===c))return;
+      if(x.resultado&&x.resultado!=='sem_resposta')s.efetivos++;
+      if(x.resultado==='agendou'||x.etapa==='agendado'){const tp=x.agenda||l.agendamento_tipo;if(tp==='consultoria')s.consultorias++;else if(tp==='experiencia')s.experiencias++;else s.visitas++}
+      if(x.resultado==='compareceu')s.compareceram++;
+    });
+    if(diasComContato.length){
+      const prim=reais.find(x=>iso(x.em)===diasComContato[0]);
+      if(diasComContato[0]===dia&&(c==='__todos'||prim.por===c))s.primeiras++;
+      const outros=new Set(reais.filter(x=>iso(x.em)===dia&&iso(x.em)!==diasComContato[0]&&(c==='__todos'||x.por===c)).map(x=>iso(x.em)));
+      s.cadencia+=outros.size;
+    }
+    if(l.venda_data&&String(l.venda_data).slice(0,10)===dia&&(c==='__todos'||l.venda_consultor===c)){
+      if(l.venda_anual&&l.venda_tipo==='novo')s.anual_novo++;
+      else if(l.venda_anual)s.anual_renov++;
+      else if(l.venda_tipo==='outro')s.mensais++;
+    }
+  }
+  return s;
+}
+function atualizar(){
+  const c=consSel(),dia=$('dia').value||hoje();
+  missoes(c,dia);
+  sistema=contarSistema(c,dia);
+  const reg=lanc.find(x=>x.data===dia&&x.consultor===(c==='__todos'?'':c));
+  const dados=(reg&&reg.dados)||{};
+  CAMPOS.filter(x=>x[0]!=='g').forEach(([k])=>{$('f-'+k).value=dados[k]??'';$('f-'+k).disabled=c==='__todos';
+    const sv=$('s-'+k);if(ehAdmin()){const dif=reg&&dados[k]!=null&&Number(dados[k])!==sistema[k];sv.textContent='sistema: '+sistema[k];sv.className='sis'+(dif?' dif':'')}else sv.textContent=''});
+  $('f-obs').value=(reg&&reg.obs)||'';$('f-obs').disabled=c==='__todos';
+  $('b-auto').hidden=!ehAdmin()||c==='__todos';
+  $('obs-auto').textContent=c==='__todos'?'Toda a equipe: só leitura. Escolha um consultor para lançar.':'';
+  historico(c);
+}
+function missoes(c,dia){
+  const ativos=leads.filter(noKanban).filter(l=>!['fechado','perdido'].includes(etapaDe(l)));
+  const fila=ativos.filter(l=>etapaDe(l)==='novo'&&!l.primeira_tentativa_em&&(!l.consultora_id||doCons(l,c)));
+  const meus=ativos.filter(l=>doCons(l,c)&&l.proximo_contato);
+  const hojeL=meus.filter(l=>iso(l.proximo_contato)===dia);
+  const atras=meus.filter(l=>iso(l.proximo_contato)<dia);
+  const agenda=leads.filter(l=>l.agendamento_em&&iso(l.agendamento_em)===dia&&(c==='__todos'||l.consultora_id===c)).sort((a,b)=>String(a.agendamento_em).localeCompare(String(b.agendamento_em)));
+  const item=(l,extra)=>'<div class="it"><span><span class="nm">'+esc(l.nome)+'</span><br><span class="sub">'+esc((ETAPAS.find(e=>e.id===etapaDe(l))||{}).n||'')+(extra?' · '+extra:'')+'</span></span><span class="esp"></span>'+(l.whatsapp_norm?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+wpp(l.whatsapp_norm)+'">WhatsApp</a>':'')+'<a class="btn sm" href="leads.html#lead='+l.id+'">Abrir</a></div>';
+  const bloco=(cls,tit,ls,vazio,fn)=>'<div class="bloco '+cls+'"><h3>'+tit+'<span class="q">'+ls.length+'</span></h3>'+(ls.length?ls.slice(0,40).map(fn).join('')+(ls.length>40?'<div class="sub">e mais '+(ls.length-40)+'</div>':''):'<div class="vazio">'+vazio+'</div>')+'</div>';
+  $('missoes').innerHTML=
+    bloco('red','Primeiras tentativas pendentes',fila,'Fila zerada. Nenhum lead novo esperando.',l=>item(l,'chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))))+
+    bloco('red','Contatos atrasados',atras,'Nenhum contato atrasado.',l=>item(l,'era para '+dataHoraBR(l.proximo_contato)))+
+    bloco('amb','Contatos marcados para hoje',hojeL,'Nenhum contato marcado para hoje.',l=>item(l,horaBR(l.proximo_contato)))+
+    bloco('blu','Agendamentos de hoje',agenda,'Nenhum agendamento hoje.',l=>item(l,(AGENDA[l.agendamento_tipo]||'Agendamento')+' às '+horaBR(l.agendamento_em)));
+}
+function usarSistema(){CAMPOS.filter(x=>x[0]!=='g').forEach(([k])=>$('f-'+k).value=sistema[k]);toast('Números do sistema preenchidos. Confira e salve.')}
+async function salvarDia(){
+  const c=consSel(),dia=$('dia').value;$('f-erro').textContent='';
+  if(c==='__todos'){$('f-erro').textContent='Escolha um consultor para lançar.';return}
+  const dados={};CAMPOS.filter(x=>x[0]!=='g').forEach(([k])=>{const v=$('f-'+k).value;dados[k]=v===''?0:Math.max(0,parseInt(v,10)||0)});
+  if(dados.primeiras+dados.cadencia===0&&!confirmarZero()){return}
+  const corpo={academia_id:AXI.AC,data:dia,consultor:c,dados,obs:$('f-obs').value.trim()||null,updated_at:new Date().toISOString(),lancado_por:AX_USER.nome};
+  try{
+    await axApi(AXI.P+'lancamentos_dia?on_conflict=academia_id,data,consultor',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(corpo)});
+    await carregar();toast('Dia lançado');
+  }catch(e){$('f-erro').textContent='Não foi possível salvar: '+String(e.message).slice(0,140)}
+}
+let zeroOk=false;
+function confirmarZero(){if(zeroOk){zeroOk=false;return true}zeroOk=true;$('f-erro').textContent='Nenhuma tentativa lançada. Clique em "Salvar o dia" de novo para confirmar.';return false}
+function historico(c){
+  const ks=CAMPOS.filter(x=>x[0]!=='g');
+  const ls=lanc.filter(x=>c==='__todos'||x.consultor===c).slice(0,c==='__todos'?40:14);
+  $('h-head').innerHTML='<tr><th>Dia</th>'+(c==='__todos'?'<th>Consultor</th>':'')+'<th>1ª tent.</th><th>Cadência</th><th>Efetivos</th><th>Visitas</th><th>Consult.</th><th>Exper.</th><th>Compar.</th><th>Anual novo</th><th>Renov.</th><th>Mensal</th></tr>';
+  $('h-body').innerHTML=ls.length?ls.map(x=>'<tr><td>'+dataBR(x.data)+'</td>'+(c==='__todos'?'<td>'+esc(x.consultor)+'</td>':'')+ks.map(([k])=>'<td>'+((x.dados||{})[k]??0)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="12" class="vazio" style="padding:14px">Nenhum dia lançado ainda.</td></tr>';
+}
+</script>
+</body>
+</html>

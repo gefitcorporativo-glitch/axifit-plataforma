@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Central de Leads · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.barra .esp{flex:1}
+.busca{padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:220px}
+.kan{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(236px,1fr);gap:10px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.col{background:#E9EBEF;border-radius:14px;padding:8px;min-height:200px}
+.col.drop{outline:2px dashed var(--red);outline-offset:-2px}
+.colh{padding:6px 6px 8px}.colh b{font:600 15px 'Space Grotesk',sans-serif}.colh .q{float:right;font:700 14px 'Space Grotesk',sans-serif;color:var(--mut)}
+.colh .d{display:block;font-size:12px;color:var(--mut)}
+.kc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 11px;margin-bottom:8px;cursor:pointer}
+.kc:hover{border-color:var(--ink)}
+.kc .nm{font-weight:600;font-size:14.5px;line-height:1.3}
+.kc .ln{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;font-size:12.5px;color:var(--mut)}
+.kc.atraso{border-left:4px solid #B42318}.kc.hoje{border-left:4px solid #D97706}
+.kc .ac{margin-top:7px;display:flex;gap:6px}
+.mais{text-align:center;font-size:12.5px;color:var(--mut);padding:4px}
+.hist{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;max-height:200px;overflow:auto}
+.hist div{font-size:13.5px;margin:5px 0}.hist b{font-weight:600}
+.dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;font-size:13.5px;background:#F7F8FA;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.dados span{color:var(--mut);display:block;font-size:12px}
+.rod{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+</style>
+</head>
+<body>
+<main class="ax-main">
+  <div class="kpis" id="kpis"></div>
+  <div class="barra">
+    <button class="btn pri" onclick="abrirNovo()">Novo lead</button>
+    <input class="busca" id="busca" placeholder="Buscar nome ou WhatsApp" oninput="render()">
+    <select class="busca" id="f-cons" style="min-width:170px" onchange="render()"></select>
+    <label class="info" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-perd" onchange="render()"> Mostrar perdidos</label>
+    <span class="esp"></span>
+    <span class="info">Clique no card para registrar a tentativa. Arraste para mudar de etapa.</span>
+  </div>
+  <div class="kan" id="kan"></div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+
+<div class="fundo" id="m-lead"><div class="modal">
+  <div class="mhead"><h2 id="l-tit">Lead</h2><button class="x" onclick="fechar()" aria-label="Fechar">×</button></div>
+  <div class="dados" id="l-dados"></div>
+  <div class="campo" data-c="canal"><span class="lb">Como foi o contato</span><div class="chips">
+    <label><input type="radio" name="canal" value="ligacao"> Ligação</label>
+    <label><input type="radio" name="canal" value="mensagem"> Mensagem</label>
+    <label><input type="radio" name="canal" value="ligacao_mensagem"> Ligação e mensagem</label>
+    <label><input type="radio" name="canal" value="presencial"> Presencial</label>
+    <label><input type="radio" name="canal" value="nenhum"> Só mudar a etapa</label>
+  </div></div>
+  <div class="campo" data-c="res"><span class="lb">Resultado</span><div class="chips">
+    <label><input type="radio" name="res" value="sem_resposta"> Sem resposta</label>
+    <label><input type="radio" name="res" value="respondeu"> Respondeu</label>
+    <label><input type="radio" name="res" value="agendou"> Agendou</label>
+    <label><input type="radio" name="res" value="compareceu"> Compareceu</label>
+    <label><input type="radio" name="res" value="fechou_anual"> Fechou o anual</label>
+    <label><input type="radio" name="res" value="fechou_mensal"> Fechou mensal ou outro plano</label>
+    <label><input type="radio" name="res" value="perdido"> Perdido</label>
+  </div></div>
+  <div class="lin" id="l-ag" hidden>
+    <div class="campo"><label for="l-agt">Tipo de agendamento</label><select id="l-agt"><option value="visita">Visita</option><option value="consultoria">Consultoria</option><option value="experiencia">Experiência</option></select></div>
+    <div class="campo" data-c="agd"><label for="l-agd">Dia e hora</label><input type="datetime-local" id="l-agd"></div>
+  </div>
+  <div class="lin" id="l-men" hidden>
+    <div class="campo"><label for="l-menp">Plano</label><input id="l-menp" value="Mensal"></div>
+    <div class="campo"><label for="l-menv">Valor (R$)</label><input id="l-menv" inputmode="decimal" value="170,00"></div>
+  </div>
+  <div class="campo" id="l-perd-c" hidden><label for="l-perd">Motivo</label><select id="l-perd"><option>Sem resposta depois da cadência</option><option>Preço</option><option>Sem limite no cartão</option><option>Distância ou horário</option><option>Escolheu outra academia</option><option>Não quer treinar agora</option><option>Outro</option></select></div>
+  <div class="lin">
+    <div class="campo"><label for="l-etapa">Etapa</label><select id="l-etapa"></select></div>
+    <div class="campo" data-c="prox" id="l-prox-c"><label for="l-prox">Próximo contato</label><input type="datetime-local" id="l-prox"><div class="info" id="l-prox-info"></div></div>
+  </div>
+  <div class="campo"><label for="l-obs">Observação</label><input id="l-obs" placeholder="O que foi conversado"></div>
+  <div class="erro" id="l-erro"></div>
+  <div class="hist" id="l-hist"></div>
+  <div class="rod">
+    <a class="btn wa" id="l-wa" target="_blank" rel="noopener">Abrir WhatsApp</a>
+    <span style="flex:1"></span>
+    <button class="btn" onclick="fechar()">Cancelar</button>
+    <button class="btn pri" id="l-ok" onclick="salvar()">Salvar</button>
+  </div>
+</div></div>
+
+<div class="fundo" id="m-novo"><div class="modal" style="max-width:520px">
+  <div class="mhead"><h2>Novo lead</h2><button class="x" onclick="$('m-novo').classList.remove('on')" aria-label="Fechar">×</button></div>
+  <p class="info" style="margin-top:0">Para quem chegou pelo WhatsApp, pelo Instagram ou no balcão sem passar pela página de cadastro.</p>
+  <div class="campo"><label for="n-nome">Nome</label><input id="n-nome"></div>
+  <div class="campo"><label for="n-wpp">WhatsApp</label><input id="n-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
+  <div class="campo"><label for="n-ori">Origem</label><select id="n-ori"><option value="whatsapp">WhatsApp</option><option value="trafego_pago">Anúncio</option><option value="instagram">Instagram orgânico</option><option value="balcao">Balcão</option><option value="indicacao">Indicação (sem link)</option><option value="outro">Outro</option></select></div>
+  <div class="erro" id="n-erro"></div>
+  <div class="rod"><button class="btn pri" onclick="criarLead()">Criar lead</button></div>
+</div></div>
+
+<script>
+let leads=[],atual=null,etapaAlvo=null,arrastando=null;
+const ORIGEM={trafego_pago:'Anúncio',indicacao_digital:'Indicação',indicacao:'Indicação',whatsapp:'WhatsApp',instagram:'Instagram',balcao:'Balcão',outro:'Outro'};
+const CANAL={ligacao:'Ligação',mensagem:'Mensagem',ligacao_mensagem:'Ligação e mensagem',presencial:'Presencial',nenhum:'Mudança de etapa'};
+const RES={sem_resposta:'Sem resposta',respondeu:'Respondeu',agendou:'Agendou',compareceu:'Compareceu',fechou_anual:'Fechou o anual',fechou_mensal:'Fechou mensal ou outro plano',perdido:'Perdido'};
+const RES_ETAPA={sem_resposta:null,respondeu:'atendimento',agendou:'agendado',compareceu:'compareceu',fechou_anual:'fechado',fechou_mensal:'fechado',perdido:'perdido'};
+
+(async function(){
+  await axEntrar('leads.html');
+  axTopo('Central de Leads','Lançamento da nova AxiFit · do cadastro ao fechamento','leads.html');
+  $('f-cons').innerHTML='<option value="">Todos os consultores</option><option value="__fila">Só a fila sem consultor</option><option value="__meus">Só os meus</option>'+axEquipe().map(n=>'<option>'+esc(n)+'</option>').join('');
+  if(!ehGestor())$('f-cons').value='';
+  $('l-etapa').innerHTML=ETAPAS.map(e=>'<option value="'+e.id+'">'+e.n+'</option>').join('');
+  await carregar();
+  setInterval(()=>{if(!document.querySelector('.fundo.on'))render()},30000);
+  const m=location.hash.match(/lead=([\w-]+)/);if(m)abrirLead(m[1]);
+})();
+async function carregar(){try{leads=(await axLeads()).filter(noKanban)}catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,80));return}render()}
+function filtrados(){
+  const q=norm($('busca').value),qd=q.replace(/\D/g,''),c=$('f-cons').value;
+  return leads.filter(l=>{
+    if(q&&!(norm(l.nome).includes(q)||(qd.length>=4&&(l.whatsapp_norm||'').includes(qd))))return false;
+    if(c==='__fila')return !l.consultora_id;
+    if(c==='__meus')return l.consultora_id===AX_USER.nome;
+    if(c)return l.consultora_id===c;
+    return true;
+  });
+}
+function situacaoProx(l){
+  if(!l.proximo_contato)return '';
+  const d=iso(l.proximo_contato),h=hoje();
+  return d<h?'atraso':d===h?'hoje':'';
+}
+function render(){
+  const fs=filtrados(),mostraPerd=$('f-perd').checked;
+  const cols=ETAPAS.filter(e=>e.id!=='perdido'||mostraPerd);
+  // indicadores do topo
+  const fila=leads.filter(l=>etapaDe(l)==='novo'),atrasos=leads.filter(l=>situacaoProx(l)==='atraso'&&!['fechado','perdido'].includes(etapaDe(l)));
+  const resp=leads.filter(l=>l.primeira_tentativa_em).map(l=>minutosUteis(l.created_at,l.primeira_tentativa_em));
+  const media=resp.length?Math.round(resp.reduce((a,b)=>a+b,0)/resp.length):0;
+  const hojeN=leads.filter(l=>iso(l.created_at)===hoje()).length;
+  $('kpis').innerHTML=[[fila.length,'na fila de novos leads',fila.length>0],[hojeN,'leads chegaram hoje'],[leads.filter(l=>situacaoProx(l)==='hoje').length,'contatos marcados para hoje'],[atrasos.length,'contatos atrasados',atrasos.length>0],[resp.length?media+' min':'sem dados','tempo médio de resposta (ideal até 5 min)']].map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+  $('kan').innerHTML=cols.map(e=>{
+    let ls=fs.filter(l=>etapaDe(l)===e.id);
+    ls.sort((a,b)=>e.id==='novo'?String(a.created_at).localeCompare(String(b.created_at)):String(a.proximo_contato||'9').localeCompare(String(b.proximo_contato||'9')));
+    const lim=e.id==='fechado'||e.id==='perdido'?30:200,vis=ls.slice(0,lim);
+    return '<div class="col" data-e="'+e.id+'"><div class="colh"><b>'+e.n+'</b><span class="q">'+ls.length+'</span><span class="d">'+e.d+'</span></div>'+vis.map(cartao).join('')+(ls.length>lim?'<div class="mais">e mais '+(ls.length-lim)+'</div>':'')+'</div>';
+  }).join('');
+  document.querySelectorAll('.kc').forEach(c=>{c.draggable=true;c.addEventListener('dragstart',ev=>{arrastando=c.dataset.id;ev.dataTransfer.effectAllowed='move'});c.addEventListener('click',ev=>{if(ev.target.closest('button,a'))return;abrirLead(c.dataset.id)})});
+  document.querySelectorAll('.col').forEach(col=>{
+    col.addEventListener('dragover',ev=>{ev.preventDefault();col.classList.add('drop')});
+    col.addEventListener('dragleave',()=>col.classList.remove('drop'));
+    col.addEventListener('drop',ev=>{ev.preventDefault();col.classList.remove('drop');if(!arrastando)return;const l=leads.find(x=>x.id===arrastando);arrastando=null;if(l&&etapaDe(l)!==col.dataset.e)abrirLead(l.id,col.dataset.e)});
+  });
+}
+function cartao(l){
+  const e=etapaDe(l),sp=situacaoProx(l),t=tentativasDe(l);
+  let linha2='<span class="tag">'+esc(ORIGEM[l.origem]||l.origem||'Cadastro')+'</span>';
+  if(l.indicado_por_codigo)linha2+='<span class="tag ind">Indicado por '+esc(primeiroNome(l.indicado_por_nome||l.indicado_por_codigo))+'</span>';
+  if(e==='agendado'&&l.agendamento_tipo)linha2+='<span class="tag ag">'+esc(AGENDA[l.agendamento_tipo]||'')+(l.agendamento_em?' · '+dataHoraBR(l.agendamento_em):'')+'</span>';
+  if(l.venda_anual)linha2+='<span class="tag ok">Anual</span>';else if(l.venda_tipo==='outro')linha2+='<span class="tag ok">Mensal/outro</span>';
+  let linha3='';
+  if(e==='novo'){linha3='Chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))}
+  else{linha3=(l.consultora_id?esc(l.consultora_id):'Sem consultor')+(t.length?' · '+t.length+' tentativa'+(t.length>1?'s':''):'')+(l.proximo_contato&&!['fechado','perdido'].includes(e)?' · próximo '+dataHoraBR(l.proximo_contato):'')}
+  const acao=e==='novo'&&!l.consultora_id?'<div class="ac"><button class="btn sm" onclick="assumir(\''+l.id+'\')">Assumir</button></div>':'';
+  return '<div class="kc '+(['fechado','perdido'].includes(e)?'':sp)+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
+}
+async function assumir(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;
+  try{await axPatchLead(id,{consultora_id:AX_USER.nome,assumido_em:new Date().toISOString()});l.consultora_id=AX_USER.nome;l.assumido_em=new Date().toISOString();render();toast('Lead assumido. Envie a boas-vindas e registre a tentativa.')}
+  catch(e){toast('Não foi possível assumir. Rode o SQL da Central de Leads.')}
+}
+function localDT(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)}
+function sugestaoProx(){const d=new Date();d.setDate(d.getDate()+2);if(d.getDay()===0)d.setDate(d.getDate()+1);d.setHours(10,0,0,0);return localDT(d)}
+function abrirLead(id,alvo){
+  const l=leads.find(x=>x.id===id);if(!l)return;atual=l;etapaAlvo=alvo||null;
+  $('l-tit').textContent=l.nome;$('l-erro').textContent='';document.querySelectorAll('#m-lead .campo').forEach(c=>c.classList.remove('inv'));
+  const r=l.respostas||{};
+  $('l-dados').innerHTML=[['WhatsApp',l.whatsapp||'sem número'],['Origem',ORIGEM[l.origem]||l.origem||''],['Chegou',dataHoraBR(l.created_at)],['Consultor',l.consultora_id||'ninguém ainda'],l.indicado_por_codigo?['Indicado por',(l.indicado_por_nome||'')+' ('+l.indicado_por_codigo+')']:null,l.idade?['Idade',l.idade]:null,l.treina?['Treina hoje',{nao_treina:'Não treina',treina:'Treina'}[l.treina]||l.treina]:null,l.tempo_parado?['Parado há',{menos_3m:'menos de 3 meses','3a12m':'3 a 12 meses',mais_1a:'mais de 1 ano'}[l.tempo_parado]||l.tempo_parado]:null,l.utm_content?['Trazido por',l.utm_content]:null].filter(Boolean).map(([a,b])=>'<div><span>'+esc(a)+'</span>'+esc(b)+'</div>').join('');
+  document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.checked=false);
+  $('l-etapa').value=alvo||etapaDe(l);$('l-obs').value='';
+  $('l-prox').value=l.proximo_contato&&new Date(l.proximo_contato)>new Date()?localDT(l.proximo_contato):'';
+  $('l-agt').value=l.agendamento_tipo||'visita';$('l-agd').value=l.agendamento_em?localDT(l.agendamento_em):'';
+  if(alvo){const c=document.querySelector('input[name=canal][value=nenhum]');c.checked=true}
+  $('l-wa').href=wpp(l.whatsapp_norm)||'#';$('l-wa').hidden=!l.whatsapp_norm;
+  const t=tentativasDe(l).slice().reverse();
+  $('l-hist').innerHTML=t.length?'<b>Histórico</b>'+t.map(x=>'<div>'+dataHoraBR(x.em)+' · <b>'+esc(x.por||'')+'</b> · '+esc(CANAL[x.canal]||'')+(x.resultado?' · '+esc(RES[x.resultado]||''):'')+(x.etapa?' → '+esc((ETAPAS.find(e=>e.id===x.etapa)||{}).n||''):'')+(x.obs?'<br><span class="info">'+esc(x.obs)+'</span>':'')+'</div>').join(''):'<span class="info">Nenhuma tentativa registrada ainda.</span>';
+  mudou();$('m-lead').classList.add('on');
+}
+function fechar(){$('m-lead').classList.remove('on');atual=null}
+document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.addEventListener('change',()=>{
+  const r=document.querySelector('input[name=res]:checked')?.value;
+  if(r&&RES_ETAPA[r])$('l-etapa').value=RES_ETAPA[r];
+  if(x.name==='canal'&&x.value!=='nenhum'&&atual&&etapaDe(atual)==='novo'&&$('l-etapa').value==='novo')$('l-etapa').value='boas_vindas';
+  if(r&&!$('l-prox').value&&!['fechou_anual','fechou_mensal','perdido'].includes(r))$('l-prox').value=sugestaoProx();
+  mudou();
+}));
+$('l-etapa').addEventListener('change',mudou);$('l-prox').addEventListener('change',mudou);
+function mudou(){
+  const r=document.querySelector('input[name=res]:checked')?.value,e=$('l-etapa').value;
+  $('l-ag').hidden=!(r==='agendou'||e==='agendado');
+  $('l-men').hidden=r!=='fechou_mensal';
+  $('l-perd-c').hidden=!(r==='perdido'||e==='perdido');
+  const fim=['fechado','perdido'].includes(e);$('l-prox-c').hidden=fim;
+  $('l-ok').textContent=r==='fechou_anual'?'Salvar e registrar o anual':'Salvar';
+  // aviso de intervalo: até 2 dias, ou 3 com fim de semana
+  const v=$('l-prox').value;let info='';
+  if(v&&!fim){const d=new Date(v),dias=(d-new Date())/864e5,fds=[0,6].some(x=>{for(let i=0;i<=Math.ceil(dias);i++){const k=new Date();k.setDate(k.getDate()+i);if(k.getDay()===x)return true}return false});
+    if(dias>(fds?3:2))info='Mais de '+(fds?3:2)+' dias até o próximo contato. A orientação é no máximo 2 dias (3 com fim de semana).';}
+  $('l-prox-info').textContent=info;
+}
+async function salvar(){
+  const l=atual;if(!l)return;
+  const canal=document.querySelector('input[name=canal]:checked')?.value,r=document.querySelector('input[name=res]:checked')?.value||null,e=$('l-etapa').value;
+  document.querySelectorAll('#m-lead .campo').forEach(c=>c.classList.remove('inv'));$('l-erro').textContent='';
+  if(!canal){document.querySelector('[data-c=canal]').classList.add('inv');$('l-erro').textContent='Diga como foi o contato.';return}
+  const fim=['fechado','perdido'].includes(e);
+  if(!fim&&!$('l-prox').value){document.querySelector('[data-c=prox]').classList.add('inv');$('l-erro').textContent='Defina o próximo contato. Nenhum lead fica sem data.';return}
+  if(e==='agendado'&&!$('l-agd').value){document.querySelector('[data-c=agd]').classList.add('inv');$('l-erro').textContent='Informe o dia e a hora do agendamento.';return}
+  const agora=new Date().toISOString();
+  const reg={em:agora,por:AX_USER.nome,canal,resultado:r,etapa:e!==etapaDe(l)?e:null,obs:$('l-obs').value.trim()||null};
+  if(e==='perdido')reg.obs=(reg.obs?reg.obs+' · ':'')+'Motivo: '+$('l-perd').value;
+  if(e==='agendado'||r==='agendou')reg.agenda=$('l-agt').value;
+  const tent=tentativasDe(l).concat([reg]);
+  const d={tentativas:tent,etapa:e,proximo_contato:fim?null:new Date($('l-prox').value).toISOString()};
+  if(!l.consultora_id&&canal!=='nenhum')d.consultora_id=AX_USER.nome;
+  if(!l.primeira_tentativa_em&&canal!=='nenhum')d.primeira_tentativa_em=agora;
+  if(e==='agendado'||r==='agendou'){d.agendamento_tipo=$('l-agt').value;d.agendamento_em=new Date($('l-agd').value).toISOString()}
+  if(e==='perdido')d.perdido_motivo=$('l-perd').value;
+  if(r==='fechou_mensal'){const v=num($('l-menv').value);d.venda_tipo='outro';d.venda_anual=false;d.venda_parcela=v>0?v:null;d.venda_parcelas=1;d.venda_total=v>0?v:null;d.venda_data=hoje();d.venda_consultor=AX_USER.nome;d.venda_obs=$('l-menp').value.trim()||'Mensal';d.status='convertido'}
+  const b=$('l-ok');b.disabled=true;
+  try{
+    await axPatchLead(l.id,d);Object.assign(l,d);
+    fechar();render();
+    if(r==='fechou_anual'){toast('Agora registre o anual e envie o cupom');location.href='cupons.html?venda='+encodeURIComponent(l.id)+'&volta=leads.html';return}
+    toast('Salvo');
+  }catch(err){$('l-erro').textContent='Não foi possível salvar: '+String(err.message).slice(0,140)+(err.status===400?' (rode o SQL da Central de Leads)':'')}
+  finally{b.disabled=false}
+}
+function abrirNovo(){$('n-nome').value='';$('n-wpp').value='';$('n-erro').textContent='';$('m-novo').classList.add('on')}
+$('n-wpp').addEventListener('input',()=>{const w=$('n-wpp');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
+async function criarLead(){
+  const nome=$('n-nome').value.trim().replace(/\s+/g,' '),dig=$('n-wpp').value.replace(/\D/g,'');
+  if(nome.length<3||dig.length<10){$('n-erro').textContent='Preencha nome e WhatsApp com DDD.';return}
+  const wn='55'+dig,ja=leads.find(x=>x.whatsapp_norm===wn);
+  if(ja){$('n-erro').textContent='Esse WhatsApp já está na Central como '+ja.nome+'.';return}
+  try{
+    const r=await axApi(AXI.P+'leads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({academia_id:AXI.AC,campanha_id:AX_CAMP.id,campanha_slug:AXI.SLUG,nome,whatsapp:$('n-wpp').value,whatsapp_norm:wn,origem:$('n-ori').value,origem_primeira:$('n-ori').value,consentimento:true,status:'novo',etapa:'novo',historico:[{data:new Date().toISOString(),campanha:AXI.SLUG,origem:$('n-ori').value,por:AX_USER.nome}]})});
+    $('m-novo').classList.remove('on');await carregar();toast('Lead criado na fila de novos leads');
+  }catch(e){$('n-erro').textContent='Não foi possível criar: '+String(e.message).slice(0,140)}
+}
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')document.querySelectorAll('.fundo.on').forEach(f=>f.classList.remove('on'))});
+</script>
+</body>
+</html>

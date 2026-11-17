@@ -142,3 +142,27 @@ alter table axifit_lead_campanhas add column if not exists precos jsonb;
 alter table axifit_lead_campanhas add column if not exists lote_atual text default 'lote1';
 alter table axifit_lead_campanhas add column if not exists acessos jsonb default '[]'::jsonb;  -- nome, papel (consultor | direcao) e PIN (SHA-256)
 alter table axifit_lead_campanhas add column if not exists regras jsonb default '{}'::jsonb;   -- chaves liga/desliga do sorteio
+
+-- 8) Central de Leads, Lançar dia e Painel (17/11/2026)
+alter table axifit_leads add column if not exists etapa text;
+alter table axifit_leads add column if not exists proximo_contato timestamptz;
+alter table axifit_leads add column if not exists primeira_tentativa_em timestamptz;
+alter table axifit_leads add column if not exists assumido_em timestamptz;
+alter table axifit_leads add column if not exists tentativas jsonb default '[]'::jsonb;
+alter table axifit_leads add column if not exists agendamento_tipo text;
+alter table axifit_leads add column if not exists agendamento_em timestamptz;
+alter table axifit_leads add column if not exists perdido_motivo text;
+alter table axifit_lead_campanhas add column if not exists investimento jsonb default '{}'::jsonb;
+create table if not exists axifit_lancamentos_dia (
+  id uuid primary key default gen_random_uuid(),
+  academia_id text not null,
+  data date not null,
+  consultor text not null,
+  dados jsonb default '{}'::jsonb,
+  obs text,
+  lancado_por text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (academia_id, data, consultor)
+);
+alter table axifit_lancamentos_dia disable row level security;
