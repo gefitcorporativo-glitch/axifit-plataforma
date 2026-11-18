@@ -166,3 +166,18 @@ create table if not exists axifit_lancamentos_dia (
   unique (academia_id, data, consultor)
 );
 alter table axifit_lancamentos_dia disable row level security;
+
+-- 9) Cupons impressos com número de série (LAN-101, LAN-102...) (17/11/2026)
+create table if not exists axifit_cupom_impressoes (
+  id uuid primary key default gen_random_uuid(),
+  academia_id text not null,
+  campanha_slug text not null,
+  tipo text not null default 'impressao',
+  de int not null,
+  ate int not null,
+  folhas int not null,
+  por text,
+  created_at timestamptz default now()
+);
+create unique index if not exists axifit_cupom_impressoes_serie on axifit_cupom_impressoes (academia_id, campanha_slug, de) where tipo = 'impressao';
+alter table axifit_cupom_impressoes disable row level security;

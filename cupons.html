@@ -123,7 +123,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
     <img src="axifit-logo-vermelho.png" alt="AxiFit">
     <div><h1>Sorteio e indicações</h1><p>Lançamento da nova AxiFit · cupons da scooter elétrica</p></div>
     <span class="esp"></span>
-    <span class="quem" id="quem"></span><a class="toplink" id="volta" hidden href="leads.html">Voltar à Central de Leads</a><a class="toplink" href="painel.html">Painel</a><a class="toplink" href="leads.html">Central de Leads</a><a class="toplink" href="dia.html">Missões e dia</a><a class="toplink" href="guia.html" target="_blank">Guia do lançamento</a><a class="toplink" href="cupons-axifit-imprimir.pdf" target="_blank">Imprimir cupons</a><a class="toplink" href="documentos.html">Documentos e ajuda</a><a class="toplink" href="termo.html" target="_blank">Termo de matrícula</a><button class="toplink" id="sair" hidden onclick="sair()">Sair</button>
+    <span class="quem" id="quem"></span><a class="toplink" id="volta" hidden href="leads.html">Voltar à Central de Leads</a><a class="toplink" href="painel.html">Painel</a><a class="toplink" href="leads.html">Central de Leads</a><a class="toplink" href="dia.html">Missões e dia</a><a class="toplink" href="guia.html" target="_blank">Guia do lançamento</a><a class="toplink" href="imprimir.html">Imprimir cupons</a><a class="toplink" href="documentos.html">Documentos e ajuda</a><a class="toplink" href="termo.html" target="_blank">Termo de matrícula</a><button class="toplink" id="sair" hidden onclick="sair()">Sair</button>
   </div>
   <nav class="tabs" id="tabs" hidden>
     <button class="tab on" data-tab="participantes">Participantes</button>
@@ -372,8 +372,8 @@ async function entrar(){
   $('quem').textContent=usuario?usuario+' · '+(PAPEL[papel]||''):'';$('sair').hidden=false;
   document.querySelectorAll('.so-gestor').forEach(e=>e.hidden=!ehGestor());
   const qp=new URLSearchParams(location.search),volta=qp.get('volta')||'',venda=qp.get('venda');
-  if(volta&&/^(painel|leads|dia|documentos)\.html(#[\w=-]*)?$/.test(volta)&&!venda){location.href=volta;return}
-  if(volta&&/^(painel|leads|dia|documentos)\.html/.test(volta)){$('volta').href=volta;$('volta').hidden=false}
+  if(volta&&/^(painel|leads|dia|documentos|imprimir)\.html(#[\w=-]*)?$/.test(volta)&&!venda){location.href=volta;return}
+  if(volta&&/^(painel|leads|dia|documentos|imprimir)\.html/.test(volta)){$('volta').href=volta;$('volta').hidden=false}
   await recarregar();
   await autoSincronizar();
   if(venda&&porId(venda)){const l=porId(venda);if(ehPart(l))abrirCupom(venda);else abrirVenda(venda)}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Imprimir cupons · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.ctrl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;align-items:start}
+@media(max-width:900px){.ctrl{grid-template-columns:1fr}}
+.pad{padding:16px 18px}
+.gerar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.gerar .campo{margin:0;width:150px}
+.prox{font:700 26px 'Space Grotesk',sans-serif;margin:4px 0 10px}
+.prox small{font:500 14px Inter,sans-serif;color:var(--mut)}
+.regras{margin:12px 0 0;padding-left:18px;font-size:14px;color:#3A3F47}.regras li{margin:4px 0}
+.regras b{color:var(--ink)}
+.t-re{background:#FFF4E5;color:#B45309}
+#area{margin-top:18px}
+#area .aviso{font-size:14px;color:var(--mut);margin-bottom:8px}
+/* folha de cupons */
+.folha{width:210mm;height:297mm;padding:8.5mm 10mm;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,1fr);background:#fff;font-family:Inter,Arial,sans-serif;color:#14171C;box-sizing:border-box;margin:0 auto 14px;box-shadow:0 1px 6px rgba(0,0,0,.12);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.folha *{box-sizing:border-box}
+.cp{border:0.3mm dashed #9AA0A8;padding:2.6mm 3.6mm 2.2mm;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.cp:nth-child(odd){border-right:none}.cp:nth-child(n+3){border-top:none}
+.cp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2.2mm;background:#E10600}
+.cp .top{display:flex;align-items:center;gap:3mm;padding-left:1.6mm}
+.cp .top img{height:8mm;width:auto}
+.cp .tit{flex:1;min-width:0;line-height:1.15}
+.cp .tit b{display:block;font-size:8.4pt;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+.cp .tit span{display:block;font-size:7pt;color:#5B616B}
+.cp .num{border:0.45mm solid #E10600;border-radius:1.6mm;padding:.8mm 1.8mm .9mm;width:23mm;flex:none}
+.cp .num small{display:block;font-size:5.8pt;font-weight:800;color:#E10600;text-transform:uppercase;letter-spacing:.05em}
+.cp .num i{display:block;height:5.2mm}
+.cp .num em{display:block;font-style:normal;font-size:4.9pt;color:#5B616B;line-height:1.1}
+.cp .campos{flex:1;display:grid;align-content:start;grid-template-columns:1.25fr 1fr;column-gap:3mm;margin-top:1.2mm;padding-left:1.6mm}
+.cp .f{display:flex;flex-direction:column;border-bottom:0.25mm solid #14171C;padding-bottom:.4mm;min-height:6.4mm}
+.cp .f label{font-size:5.8pt;font-weight:700;color:#5B616B;text-transform:uppercase;letter-spacing:.05em;padding-top:.8mm}
+.cp .f.l{grid-column:1/3}
+.cp .f.tp{border-bottom:none}
+.cp .tp span{font-size:6.6pt;display:flex;align-items:center;gap:1.1mm;white-space:nowrap;margin-top:auto}
+.cp .tp span i{display:inline-block;width:2.6mm;height:2.6mm;border:0.25mm solid #14171C;border-radius:.4mm;margin-left:.8mm}
+.cp .tp span i:first-child{margin-left:0}
+.cp .rod{display:flex;align-items:center;gap:3mm;margin-top:1.4mm;padding-left:1.6mm}
+.cp .rod p{flex:1;font-size:5.5pt;color:#5B616B;line-height:1.25}
+.cp .rod p b{color:#14171C}
+.cp .serie{font-size:8.6pt;font-weight:800;letter-spacing:.04em;white-space:nowrap;background:#14171C;color:#fff;border-radius:1mm;padding:.4mm 1.8mm}
+.cp .serie small{font-size:5.4pt;font-weight:700;color:#C9CDD3;text-transform:uppercase;margin-right:1mm}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .ax-top,.ctrl,.ax-rod,#area .aviso,.ax-toast{display:none!important}
+  .ax-main{padding:0!important;max-width:none!important;margin:0!important}
+  #area{margin:0}
+  .folha{box-shadow:none;margin:0;break-after:page}
+  .folha:last-child{break-after:auto}
+}
+</style>
+</head>
+<body>
+<main class="ax-main">
+  <div class="ctrl">
+    <div class="card pad">
+      <h2 class="sec" style="margin:0 0 6px">Imprimir cupons numerados</h2>
+      <div class="sub">Próximo número de série</div>
+      <div class="prox" id="prox">...</div>
+      <div class="gerar">
+        <div class="campo"><label for="folhas">Quantas folhas?</label><input id="folhas" type="number" min="1" max="10" value="1"></div>
+        <button class="btn pri" id="btn-gerar" onclick="gerar()">Gerar e imprimir</button>
+      </div>
+      <p class="info" id="faixa" style="margin:8px 0 0"></p>
+      <ul class="regras">
+        <li>Cada folha tem 10 cupons, com número de série em sequência. <b>A impressão fica registrada</b> com o seu nome.</li>
+        <li>Corte e guarde <b>em ordem, no caixa</b>. Cupom é papel com valor: nunca use como rascunho.</li>
+        <li>Na venda, anote no cupom o <b>número do sorteio gerado no Hub</b>, o código, o nome, o consultor e assine.</li>
+        <li>Estragou? Risque, escreva <b>inutilizado</b> e entregue à liderança. Não jogue fora.</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h2 class="sec" style="margin:0 0 8px">Histórico de impressões</h2>
+      <div class="sub" id="total" style="margin-bottom:8px"></div>
+      <div class="scroll"><table><thead><tr><th>Quando</th><th>Séries</th><th>Folhas</th><th>Quem</th><th></th></tr></thead><tbody id="hist"></tbody></table></div>
+    </div>
+  </div>
+  <div id="area"></div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+const PREF='LAN-',INICIO=101,POR_FOLHA=10;
+let imps=[];
+const serie=n=>PREF+n;
+(async function(){
+  await axEntrar('imprimir.html');
+  axTopo('Imprimir cupons','Cupons do sorteio com número de série, para guardar no caixa','imprimir.html');
+  await carregar();
+})();
+async function carregar(){
+  try{imps=(await axApi(AXI.P+'cupom_impressoes?academia_id=eq.'+AXI.AC+'&campanha_slug=eq.'+AXI.SLUG+'&select=*&order=created_at.desc&limit=500'))||[]}
+  catch(e){$('prox').textContent='indisponível';$('faixa').textContent='Rode o SQL da impressão de cupons para liberar esta tela.';$('btn-gerar').disabled=true;return}
+  render();
+}
+function proximo(){const m=imps.filter(x=>x.tipo==='impressao').reduce((a,x)=>Math.max(a,Number(x.ate)||0),INICIO-1);return m+1}
+function render(){
+  const p=proximo(),f=Math.max(1,Math.min(10,parseInt($('folhas').value)||1));
+  $('prox').innerHTML=serie(p)+' <small>até '+serie(p+f*POR_FOLHA-1)+' nesta impressão</small>';
+  const im=imps.filter(x=>x.tipo==='impressao'),tot=im.reduce((a,x)=>a+(x.ate-x.de+1),0);
+  $('total').textContent=tot?tot+' cupons impressos, de '+serie(INICIO)+' a '+serie(p-1)+'.':'Nenhuma impressão ainda.';
+  $('hist').innerHTML=imps.length?imps.map(x=>'<tr><td>'+dataHoraBR(x.created_at)+'</td><td><b>'+serie(x.de)+'</b> a <b>'+serie(x.ate)+'</b></td><td>'+x.folhas+'</td><td>'+esc(x.por||'')+'</td><td>'+(x.tipo==='reimpressao'?'<span class="tag t-re">reimpressão</span>':(ehGestor()?'<button class="btn sm" onclick="reimprimir(\''+x.id+'\')">Imprimir de novo</button>':''))+'</td></tr>').join(''):'<tr><td colspan="5" class="sub">Nenhuma impressão ainda.</td></tr>';
+}
+$('folhas').addEventListener('input',()=>{if(imps)render()});
+async function registrar(reg){return axApi(AXI.P+'cupom_impressoes',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({academia_id:AXI.AC,campanha_slug:AXI.SLUG,por:AX_USER.nome,...reg})})}
+async function gerar(){
+  const f=Math.max(1,Math.min(10,parseInt($('folhas').value)||1));
+  if(!confirm('Gerar '+f+' folha(s), '+f*POR_FOLHA+' cupons numerados? A impressão fica registrada no seu nome.'))return;
+  $('btn-gerar').disabled=true;
+  try{
+    let ok=null;
+    for(let t=0;t<3&&!ok;t++){
+      if(t)await carregar();
+      const de=proximo(),ate=de+f*POR_FOLHA-1;
+      try{ok=await registrar({tipo:'impressao',de,ate,folhas:f})}catch(e){if(e.status!==409)throw e}
+    }
+    if(!ok)throw new Error('conflito');
+    const r=Array.isArray(ok)?ok[0]:ok;
+    await carregar();
+    imprimir(r.de,r.ate);
+  }catch(e){toast('Não foi possível registrar a impressão. Tente de novo.')}
+  finally{$('btn-gerar').disabled=false}
+}
+async function reimprimir(id){
+  const x=imps.find(i=>i.id===id);if(!x)return;
+  if(!confirm('Imprimir de novo as séries '+serie(x.de)+' a '+serie(x.ate)+'? Use só se a impressão anterior falhou. Os papéis da impressão com defeito devem ser inutilizados.'))return;
+  try{await registrar({tipo:'reimpressao',de:x.de,ate:x.ate,folhas:x.folhas});await carregar();imprimir(x.de,x.ate)}
+  catch(e){toast('Não foi possível registrar a reimpressão.')}
+}
+function cupom(n){return '<div class="cp"><div class="top"><img src="axifit-logo-vermelho.png" alt="AxiFit"><div class="tit"><b>Sorteio da Scooter Elétrica</b><span>Lançamento da nova AxiFit</span></div>'+
+  '<div class="num"><small>Nº do sorteio</small><i></i><em>anote o número gerado no Hub</em></div></div>'+
+  '<div class="campos"><div class="f"><label>Código do aluno</label></div><div class="f"><label>Data</label></div><div class="f l"><label>Nome do aluno</label></div>'+
+  '<div class="f"><label>WhatsApp</label></div><div class="f tp"><label>Tipo do cupom</label><span><i></i>Anual novo <i></i>Renovação <i></i>Indicação</span></div>'+
+  '<div class="f"><label>Consultor</label></div><div class="f"><label>Assinatura do consultor</label></div></div>'+
+  '<div class="rod"><p>Válido só com o <b>número do sorteio gerado no Hub</b> e a assinatura do consultor.</p><div class="serie"><small>Série</small>'+serie(n)+'</div></div></div>'}
+function imprimir(de,ate){
+  let h='<p class="aviso">Séries '+serie(de)+' a '+serie(ate)+'. Se a janela de impressão não abrir, use Ctrl+P.</p>';
+  for(let n=de;n<=ate;n+=POR_FOLHA){let c='';for(let k=n;k<n+POR_FOLHA&&k<=ate;k++)c+=cupom(k);h+='<div class="folha">'+c+'</div>'}
+  $('area').innerHTML=h;
+  const imgs=[...$('area').querySelectorAll('img')];
+  Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),300));
+}
+</script>
+</body>
+</html>
