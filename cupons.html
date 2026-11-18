@@ -315,7 +315,7 @@ async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncod
 
 /* ---------- acesso ---------- */
 const PAPEL={consultor:'Consultor',lideranca:'Liderança',direcao:'Direção',admin:'Administrador'};
-const ACESSOS_INICIAIS=[{nome:'Natália',papel:'consultor'},{nome:'Pedro',papel:'consultor'},{nome:'Jéssica',papel:'consultor'},{nome:'Vinícius',papel:'direcao'},{nome:'Damião',papel:'lideranca'}];
+const ACESSOS_INICIAIS=[{nome:'Nathália',papel:'consultor'},{nome:'Pedro',papel:'consultor'},{nome:'Jéssica',papel:'consultor'},{nome:'Vinícius',papel:'direcao'},{nome:'Damião',papel:'lideranca'}];
 function acessos(){return Array.isArray(camp&&camp.acessos)?camp.acessos:[]}
 const ehGestor=()=>['direcao','lideranca','admin'].includes(papel);
 async function hashDe(nome,pin){return sha('axifit:'+norm(nome)+':'+pin)}
