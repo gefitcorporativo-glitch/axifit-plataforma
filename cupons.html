@@ -372,8 +372,8 @@ async function entrar(){
   $('quem').textContent=usuario?usuario+' · '+(PAPEL[papel]||''):'';$('sair').hidden=false;
   document.querySelectorAll('.so-gestor').forEach(e=>e.hidden=!ehGestor());
   const qp=new URLSearchParams(location.search),volta=qp.get('volta')||'',venda=qp.get('venda');
-  if(volta&&/^(painel|leads|dia)\.html(#[\w=-]*)?$/.test(volta)&&!venda){location.href=volta;return}
-  if(volta&&/^(painel|leads|dia)\.html/.test(volta)){$('volta').href=volta;$('volta').hidden=false}
+  if(volta&&/^(painel|leads|dia|documentos)\.html(#[\w=-]*)?$/.test(volta)&&!venda){location.href=volta;return}
+  if(volta&&/^(painel|leads|dia|documentos)\.html/.test(volta)){$('volta').href=volta;$('volta').hidden=false}
   await recarregar();
   await autoSincronizar();
   if(venda&&porId(venda)){const l=porId(venda);if(ehPart(l))abrirCupom(venda);else abrirVenda(venda)}
