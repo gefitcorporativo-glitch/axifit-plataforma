@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Passo a passo do lançamento · AxiFit</title>
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Arial,sans-serif;color:#14171C;font-size:8pt;line-height:1.27;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.folha{width:210mm;height:297mm;padding:6mm 10mm 4.5mm;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:5mm;margin-bottom:2.6mm}
+header img{height:12mm}
+header h1{font-size:17pt;font-weight:800;line-height:1.05}
+header p{font-size:8.4pt;color:#5B616B;margin-top:.6mm}
+.entrar{margin-left:auto;background:#14171C;color:#fff;border-radius:2.4mm;padding:2mm 3.4mm;font-size:7.4pt;line-height:1.35;max-width:78mm}
+.entrar b{color:#fff;font-size:8.2pt;display:block}
+.entrar span{color:#FF8A80}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2.2mm;flex:1;align-content:start}
+.b{border-radius:2.6mm;overflow:hidden;border:0.3mm solid #D5D8DE;display:flex;flex-direction:column}
+.cab{background:#E10600;color:#fff;padding:1.4mm 3.2mm;display:flex;align-items:center;gap:2.4mm}
+.cab .ic{width:6.4mm;height:6.4mm;border-radius:50%;background:#fff;color:#E10600;display:flex;align-items:center;justify-content:center;flex:none}
+.cab .ic svg{width:4.4mm;height:4.4mm}
+.cab h2{font-size:10.6pt;font-weight:800;line-height:1.1}
+.cab small{display:block;font-size:7.2pt;font-weight:500;opacity:.9}
+.cab.esc{background:#14171C}.cab.esc .ic{color:#14171C}
+.passos{list-style:none;padding:2.2mm 3.2mm 2mm;flex:1}
+.passos li{position:relative;padding:0 0 1.25mm 8.2mm;min-height:5.6mm}
+.passos li::before{counter-increment:p;content:counter(p);position:absolute;left:0;top:-.2mm;width:5.6mm;height:5.6mm;border-radius:50%;background:#14171C;color:#fff;font-weight:800;font-size:7.6pt;display:flex;align-items:center;justify-content:center}
+.passos li::after{content:"";position:absolute;left:2.65mm;top:5.6mm;bottom:.2mm;width:.35mm;background:#D5D8DE}
+.passos li:last-child{padding-bottom:0}.passos li:last-child::after{display:none}
+.passos{counter-reset:p}
+.passos li.hot::before{background:#E10600}
+.passos b{display:block;font-size:8.5pt}
+.passos .d{color:#4A5059;font-size:7.7pt}
+.bt{display:inline-block;background:#E10600;color:#fff;border-radius:1mm;padding:0 1.3mm;font-size:7.3pt;font-weight:700;white-space:nowrap;line-height:1.5}
+.bt.k{background:#14171C}
+.nota{margin:0 3.2mm 2.6mm;background:#FFF5F5;border-left:1mm solid #E10600;border-radius:1mm;padding:1.4mm 2.2mm;font-size:7.5pt}
+.full{grid-column:1/3}
+.lider{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm;padding:2mm 3.2mm}
+.lider div{background:#F3F4F6;border-radius:1.6mm;padding:1.8mm 2.2mm;font-size:7.5pt}
+.lider b{display:block;font-size:8.2pt;margin-bottom:.6mm}
+.nunca{display:grid;grid-template-columns:repeat(4,1fr);gap:1.8mm;padding:2mm 3.2mm}
+.nunca div{border:0.3mm solid #F4B4AE;background:#FFF5F5;border-radius:1.6mm;padding:1.6mm 2mm 1.6mm 6.4mm;position:relative;font-size:7.4pt}
+.nunca div::before{content:"✕";position:absolute;left:1.8mm;top:1.3mm;color:#E10600;font-weight:800;font-size:8.6pt}
+.nunca div b{display:block;font-size:7.9pt}
+footer{margin-top:1.6mm;display:flex;justify-content:space-between;font-size:6.8pt;color:#9AA0A8}
+</style>
+</head>
+<body>
+<div class="folha">
+<header>
+  <img src="axifit-logo-vermelho.png" alt="AxiFit">
+  <div><h1>Passo a passo do lançamento</h1><p>Encontre a sua situação e siga os passos. Na dúvida, chame a liderança.</p></div>
+  <div class="entrar"><b>Como entrar no Hub</b><span style="color:#fff;white-space:nowrap">gefitcorporativo-glitch.github.io/axifit-plataforma</span><br>Escolha o seu nome e digite o seu PIN. <span>O PIN é só seu.</span></div>
+</header>
+
+<div class="grid">
+  <div class="b">
+    <div class="cab"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div><h2>Fechou um anual</h2><small>novo ou renovação</small></div></div>
+    <ol class="passos">
+      <li class="hot"><b>Lance primeiro no SCA</b><span class="d">Plano do lote atual. Anote a matrícula.</span></li>
+      <li><b>Abra <span class="bt k">Sorteio e indicações</span></b><span class="d">Clique em <span class="bt">Registrar anual vendido</span></span></li>
+      <li><b>Preencha matrícula, nome e WhatsApp</b><span class="d">Marque anual novo (não é aluno) ou renovação (já é aluno). O valor entra sozinho.</span></li>
+      <li><b>Clique em <span class="bt">Salvar e gerar cupom</span></b><span class="d">O número do cupom sai na hora.</span></li>
+      <li><b>Envie ao aluno</b><span class="d"><span class="bt k">Copiar imagem</span> → <span class="bt k">Abrir WhatsApp</span> → cole a imagem (Ctrl+V) e envie com a mensagem e o link.</span></li>
+      <li class="hot"><b>Cupom de papel na urna</b><span class="d">Mesmo número do Hub, código, nome, consultor e assinatura. O aluno coloca na urna.</span></li>
+      <li><b>Peça indicações no balcão</b><span class="d">Até 5 amigos pelo link dele.</span></li>
+    </ol>
+  </div>
+
+  <div class="b">
+    <div class="cab"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><div><h2>Chegou um lead</h2><small>Central de Leads</small></div></div>
+    <ol class="passos">
+      <li><b>Abra <span class="bt k">Central de Leads</span></b><span class="d">Os novos ficam na primeira coluna.</span></li>
+      <li><b>Clique em <span class="bt">Assumir</span></b><span class="d">O lead passa a ser seu.</span></li>
+      <li class="hot"><b>Responda em até 5 minutos</b><span class="d">Ligação ou mensagem, sem preço.</span></li>
+      <li><b>Clique no nome e registre o contato</b><span class="d">Como foi, o resultado e uma observação.</span></li>
+      <li><b>Marque o próximo contato</b><span class="d">Obrigatório até fechar ou perder.</span></li>
+      <li><b>Agendou?</b><span class="d">Visita, consultoria ou Experiência, com dia e hora.</span></li>
+      <li><b>Fechou o anual?</b><span class="d">Marque fechou anual: abre o registro de venda. Siga o quadro ao lado.</span></li>
+    </ol>
+    <div class="nota"><b>Toda visita é registrada</b>, até de quem chega para comprar na hora.</div>
+  </div>
+
+  <div class="b">
+    <div class="cab"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div><div><h2>Aluno que já tem anual</h2><small>quer o link de indicação</small></div></div>
+    <ol class="passos">
+      <li><b>Ache o nome em <span class="bt k">Sorteio e indicações</span></b><span class="d">Não achou? <span class="bt">Cadastrar aluno que já tem anual</span></span></li>
+      <li><b>Confira o WhatsApp</b><span class="d">Clique em <span class="bt k">Copiar link do aluno</span></span></li>
+      <li><b>Converse e envie o link</b><span class="d">Sem cupom próprio: ganha 1 cupom por amigo que comprar o anual, até 5.</span></li>
+      <li class="hot"><b>Quer comprar outro anual?</b><span class="d">Lance no SCA, abra o nome dele e troque para renovação. O cupom sai na hora.</span></li>
+    </ol>
+  </div>
+
+  <div class="b">
+    <div class="cab"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div><div><h2>Amigo indicado comprou</h2><small>cupom de indicação</small></div></div>
+    <ol class="passos">
+      <li><b>Registre a venda do amigo</b><span class="d">Como no quadro "Fechou um anual". Se veio pelo link, aparece Indicado por.</span></li>
+      <li><b>O cupom de quem indicou sai sozinho</b><span class="d">O amigo ganha o dele e quem indicou ganha +1.</span></li>
+      <li class="hot"><b>Cupom de papel para quem indicou</b><span class="d">Marque indicação. Se ele não estiver, deposite e mande a foto.</span></li>
+    </ol>
+    <div class="cab esc" style="margin-top:auto"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></div><div><h2>Fim do dia</h2><small>Missões e Lançar dia</small></div></div>
+    <ol class="passos">
+      <li><b>Abra <span class="bt k">Missões e Lançar dia</span></b><span class="d">Veja o que ficou pendente.</span></li>
+      <li><b>Preencha os números e clique em <span class="bt">Salvar o dia</span></b><span class="d">Tentativas, contatos, visitas, Experiências e vendas.</span></li>
+    </ol>
+  </div>
+
+  <div class="b full">
+    <div class="cab esc"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div><div><h2>Passe para a liderança</h2><small>não resolva sozinho</small></div></div>
+    <div class="lider">
+      <div><b>Cancelamento</b>Não explique regra nem multa. "Tranquilo, vou passar para o líder conversar com você." O Damião assume.</div>
+      <div><b>Sem limite no cartão</b>Negociação só com autorização do Vinícius. Nunca divulgue como condição.</div>
+      <div><b>Erro em venda ou cupom</b>Não registre de novo. A liderança corrige ou desfaz.</div>
+      <div><b>Dúvida de regra</b>Veja o Guia do lançamento e o Termo, no Hub.</div>
+    </div>
+  </div>
+
+  <div class="b full">
+    <div class="cab"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.7 5.7l12.6 12.6"/></svg></div><div><h2>Nunca faça</h2></div></div>
+    <div class="nunca">
+      <div><b>Preço por mensagem</b>Nem áudio, story ou print. Puxe para a ligação ou visita.</div>
+      <div><b>Dizer "incluso"</b>Aulas e bike são cortesia, presente, bônus.</div>
+      <div><b>Dizer quando o lote acaba</b>Pode acabar a qualquer momento.</div>
+      <div><b>Desconto por conta própria</b>Nem abater mensal já pago.</div>
+      <div><b>Hub antes do SCA</b>Sempre o SCA primeiro.</div>
+      <div><b>Contrato em PDF</b>Para quem ainda não é aluno, não.</div>
+      <div><b>Print para cliente</b>Do Hub, do contrato ou da tabela.</div>
+      <div><b>Passar o seu PIN</b>Cada venda fica no nome de quem lançou.</div>
+    </div>
+  </div>
+</div>
+<footer><span>Lançamento da nova AxiFit · atualizado em 17/11/2026</span><span>Metodologia GeFit</span></footer>
+</div>
+</body>
+</html>

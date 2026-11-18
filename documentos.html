@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Documentos e ajuda · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.doc{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-decoration:none;color:inherit;transition:border-color .15s}
+.doc:hover{border-color:var(--red)}
+.doc b{font:600 17px 'Space Grotesk',sans-serif}
+.doc span{font-size:14px;color:var(--mut)}
+.doc i{font-style:normal;font-size:12px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em}
+.doc.hot{border:2px solid var(--red)}
+</style>
+</head>
+<body>
+<main class="ax-main">
+  <h2 class="sec" style="margin-top:4px">Para imprimir e deixar na recepção</h2>
+  <div class="docs">
+    <a class="doc hot" href="passo-a-passo-axifit.pdf" target="_blank"><i>PDF · 1 folha A4</i><b>Passo a passo do lançamento</b><span>Fechou um anual, chegou um lead, aluno que já tem anual, amigo indicado comprou, fim do dia, o que passa para a liderança e o que nunca fazer.</span></a>
+    <a class="doc" href="cupons-axifit-imprimir.pdf" target="_blank"><i>PDF · 10 cupons por folha</i><b>Cupons do sorteio para imprimir</b><span>Imprima, corte e deixe na recepção. Preencha com o mesmo número gerado no Hub, código, nome, consultor e assinatura.</span></a>
+  </div>
+  <h2 class="sec">Para consultar</h2>
+  <div class="docs">
+    <a class="doc" href="guia.html"><i>Página</i><b>Guia do lançamento</b><span>Alinhamento da reunião, valores e benefícios, passo a passo da venda, indicação e frases para usar.</span></a>
+    <a class="doc" href="termo.html"><i>Página</i><b>Termo de matrícula</b><span>As regras do contrato explicadas por assunto: trancamento, atestado, cancelamento e perguntas frequentes.</span></a>
+  </div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+(async function(){await axEntrar('documentos.html');axTopo('Documentos e ajuda','Materiais do lançamento para consultar e imprimir','documentos.html')})();
+</script>
+</body>
+</html>
