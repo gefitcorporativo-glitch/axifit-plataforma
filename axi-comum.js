@@ -55,17 +55,46 @@ async function axEntrar(pagina){
     if(s.papel==='admin')ok=!!AX_CAMP.acesso_pin_hash&&s.h===AX_CAMP.acesso_pin_hash;
     else{const a=(AX_CAMP.acessos||[]).find(x=>x.nome===s.nome);ok=!!(a&&a.pin_hash&&a.pin_hash===s.h);if(ok)s.papel=a.papel}
   }
-  if(!ok){location.href='cupons.html?volta='+encodeURIComponent(pagina+location.hash);return new Promise(()=>{})}
+  if(!ok){
+    if(!AX_CAMP||!AX_CAMP.acesso_pin_hash){location.href='cupons.html?volta='+encodeURIComponent(pagina+location.hash);return new Promise(()=>{})}
+    s=await axTelaLogin();
+  }
   AX_USER={nome:s.nome,papel:s.papel};
   return AX_CAMP;
 }
-function axSair(){try{sessionStorage.removeItem('axi_sess')}catch(e){}location.href='cupons.html'}
+function axSair(){try{sessionStorage.removeItem('axi_sess')}catch(e){}location.href='index.html'}
+async function axSha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+/* Tela de entrada: nome + PIN, na própria página */
+function axTelaLogin(){return new Promise(resolve=>{
+  const outros=[...document.body.children];outros.forEach(e=>{e.dataset.axDisp=e.style.display;e.style.display='none'});
+  const ac=(AX_CAMP.acessos||[]).filter(a=>a.pin_hash);
+  const g=document.createElement('div');g.className='ax-login';
+  g.innerHTML='<div class="ax-lg-card"><img src="axifit-logo-vermelho.png" alt="AxiFit"><h1>Hub do Lançamento</h1><p>Entre com o seu nome e o seu PIN.</p>'+
+    '<label for="ax-lg-quem">Quem é você?</label><select id="ax-lg-quem"><option value="">Escolha o seu nome</option>'+ac.map(a=>'<option value="'+esc(a.nome)+'">'+esc(a.nome)+'</option>').join('')+'<option value="__admin">Administrador</option></select>'+
+    '<label for="ax-lg-pin">PIN</label><input id="ax-lg-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Seus números">'+
+    '<div class="ax-lg-erro" id="ax-lg-erro"></div><button id="ax-lg-ok">Entrar</button><small>O PIN é pessoal. Esqueceu? Fale com a liderança.</small></div><div class="ax-lg-rod">Metodologia GeFit</div>';
+  document.body.appendChild(g);
+  const q=g.querySelector('#ax-lg-quem'),p=g.querySelector('#ax-lg-pin'),er=g.querySelector('#ax-lg-erro'),bt=g.querySelector('#ax-lg-ok');
+  q.focus();q.onchange=()=>p.focus();
+  const ir=async()=>{
+    er.textContent='';const nome=q.value,pin=p.value.trim();
+    if(!nome){er.textContent='Escolha o seu nome.';return}
+    if(!/^\d{4,8}$/.test(pin)){er.textContent='O PIN tem de 4 a 8 números.';return}
+    let ses=null;
+    if(nome==='__admin'){const h=await axSha('axifit:'+pin);if(h===AX_CAMP.acesso_pin_hash)ses={nome:'Administrador',papel:'admin',h}}
+    else{const a=ac.find(x=>x.nome===nome);const h=await axSha('axifit:'+norm(nome)+':'+pin);if(a&&a.pin_hash===h)ses={nome:a.nome,papel:a.papel,h}}
+    if(!ses){er.textContent='PIN incorreto.';p.select();return}
+    try{sessionStorage.setItem('axi_sess',JSON.stringify(ses))}catch(e){}
+    g.remove();outros.forEach(e=>{e.style.display=e.dataset.axDisp||''});resolve(ses);
+  };
+  bt.onclick=ir;p.addEventListener('keydown',e=>{if(e.key==='Enter')ir()});
+})}
 function axEquipe(){const a=(AX_CAMP&&AX_CAMP.acessos)||[];return a.map(x=>x.nome)}
 function axRegras(){return (AX_CAMP&&AX_CAMP.regras&&typeof AX_CAMP.regras==='object')?AX_CAMP.regras:{}}
 
 /* Menu do topo, igual em todas as telas internas */
 function axTopo(titulo,sub,ativo){
-  const links=[['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
+  const links=[['index.html','Início'],['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
   const h=document.createElement('div');h.className='ax-top';
   h.innerHTML='<div class="ax-in"><a href="index.html"><img src="axifit-logo-vermelho.png" alt="AxiFit"></a><div><h1>'+esc(titulo)+'</h1><p>'+esc(sub||'')+'</p></div><span class="ax-esp"></span><span class="ax-quem">'+esc(AX_USER.nome)+' · '+esc(PAPEL[AX_USER.papel]||'')+'</span><button class="ax-sair" onclick="axSair()">Sair</button></div>'+
     '<nav class="ax-nav">'+links.map(([u,n])=>'<a href="'+u+'"'+(u.endsWith('.pdf')?' target="_blank"':'')+(u===ativo?' class="on"':'')+'>'+n+'</a>').join('')+'</nav>';
@@ -110,6 +139,18 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ax-nav a{color:#B9BEC7;text-decoration:none;font-size:14px;font-weight:500;padding:10px 12px;border-bottom:3px solid transparent;white-space:nowrap}
 .ax-nav a.on,.ax-nav a:hover{color:#fff;border-bottom-color:var(--red)}
 .ax-main{max-width:1400px;margin:0 auto;padding:20px 24px 40px}
+.ax-login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#14171C}
+.ax-lg-card{width:100%;max-width:400px;background:#fff;border-radius:18px;padding:30px 28px 24px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.ax-lg-card img{height:56px;align-self:center;margin-bottom:10px}
+.ax-lg-card h1{font:700 24px 'Space Grotesk',Inter,sans-serif;text-align:center;margin:0}
+.ax-lg-card p{text-align:center;color:var(--mut);margin:4px 0 18px}
+.ax-lg-card label{font-size:13px;font-weight:600;margin:10px 0 5px}
+.ax-lg-card select,.ax-lg-card input{width:100%;padding:12px 12px;border:1px solid #CDD1D7;border-radius:10px;font-size:16px;background:#fff}
+.ax-lg-card button{margin-top:16px;background:var(--red);color:#fff;border:0;border-radius:10px;padding:13px;font-weight:700;font-size:16px;cursor:pointer}
+.ax-lg-card button:hover{filter:brightness(.95)}
+.ax-lg-card small{display:block;text-align:center;color:var(--mut);margin-top:12px;font-size:12.5px}
+.ax-lg-erro{color:#B42318;font-size:13.5px;min-height:18px;margin-top:8px}
+.ax-lg-rod{color:#7D838C;font-size:12px;margin-top:16px}
 .ax-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#14171C;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;display:none;z-index:60}.ax-toast.on{display:block}
 .ax-selo{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}.ax-selo.ok{background:#E8F5EE;color:var(--ok)}.ax-selo.at{background:#FEF3C7;color:#92400E}.ax-selo.ru{background:#FDECEA;color:#B42318}
 .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;text-decoration:none;color:var(--ink);display:inline-block}

@@ -1,27 +1,62 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
-<title>Hub de Lançamento · AxiFit</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box}body{margin:0;background:#F3F4F6;color:#14171C;font:15px/1.5 Inter,system-ui,sans-serif}
-.top{background:#14171C;color:#fff}.in{max-width:980px;margin:0 auto;padding:22px 24px;display:flex;gap:16px;align-items:center}.top img{height:44px}
-h1{font:600 24px 'Space Grotesk',sans-serif;margin:0}.top p{margin:2px 0 0;color:#B9BEC7;font-size:14px}
-main{max-width:980px;margin:0 auto;padding:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-a.c{display:block;background:#fff;border:1px solid #E3E5E9;border-radius:14px;padding:18px;text-decoration:none;color:inherit}a.c:hover{border-color:#14171C}
-a.c b{display:block;font:600 18px 'Space Grotesk',sans-serif;margin-bottom:4px}a.c span{color:#5B6370;font-size:14px}a.c.hot{border:2px solid #E10600}
-.off{background:#fff;border:1px dashed #C9CED6;border-radius:14px;padding:18px;color:#5B6370}.off b{display:block;font:600 18px 'Space Grotesk',sans-serif;color:#14171C;margin-bottom:4px}
-footer{max-width:980px;margin:0 auto;padding:0 24px 30px;color:#5B6370;font-size:12px;text-align:right}</style></head>
-<body><div class="top"><div class="in"><img src="axifit-logo-vermelho.png" alt="AxiFit"><div><h1>Painel de Lançamento</h1><p>Nova AxiFit · novas instalações, sala de bike e nova metodologia</p></div></div></div>
-<main>
-<a class="c hot" href="guia.html#reuniao"><b>Alinhamento da reunião 17/11</b><span>O que mudou, o que nunca fazer, casos do balcão, cancelamento e o que está em aberto.</span></a>
-<a class="c" href="guia.html"><b>Guia do lançamento</b><span>Passo a passo da venda, indicação e cupons, o que vale e o que não vale, valores e frases.</span></a>
-<a class="c" href="cupons.html"><b>Sorteio e indicações</b><span>Registrar anual vendido, gerar o cupom, enviar no WhatsApp e acompanhar os amigos indicados.</span></a>
-<a class="c hot" href="passo-a-passo-axifit.pdf" target="_blank"><b>Passo a passo do lançamento (PDF)</b><span>Uma folha A4 com o fluxo de cada situação. Para consultar ou imprimir e deixar na recepção.</span></a>
-<a class="c" href="imprimir.html"><b>Imprimir cupons do sorteio</b><span>Folhas com 10 cupons numerados em série (LAN-101, LAN-102...). Cada impressão fica registrada. Guarde em ordem no caixa.</span></a>
-<a class="c" href="documentos.html"><b>Documentos e ajuda</b><span>Todos os materiais do lançamento num lugar só: passo a passo, cupons para imprimir, guia e termo.</span></a>
-<a class="c" href="captura.html?c=lancamento"><b>Página de cadastro</b><span>O link que vai nos anúncios e no QR Code. Quem chega pelo link de um aluno fica vinculado a ele.</span></a>
-<a class="c" href="termo.html"><b>Termo de matrícula</b><span>As regras do contrato explicadas por assunto, trancamento ou afastamento e perguntas frequentes.</span></a>
-<a class="c" href="painel.html"><b>Painel de Lançamento</b><span>Total vendido, vendas por lote, ROI, funil, tempo de resposta e resultado por consultor.</span></a>
-<a class="c" href="leads.html"><b>Central de Leads</b><span>Kanban do cadastro ao fechamento, com tempo de resposta e próximo contato.</span></a>
-<a class="c" href="dia.html"><b>Missões e Lançar dia</b><span>O que fazer hoje e o lançamento do que foi feito, no computador da academia.</span></a>
-<div class="off"><b>Biblioteca de scripts</b>Em construção.</div>
-</main><footer>Metodologia GeFit</footer></body></html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Hub do Lançamento · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.ola{font:600 22px 'Space Grotesk',sans-serif;margin:6px 0 2px}
+.ola+p{color:var(--mut);margin:0 0 18px}
+.grupo{margin:22px 0 10px;font:600 13px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+a.c{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.c:hover{border-color:var(--ink);transform:translateY(-1px)}
+a.c .ic{width:42px;height:42px;border-radius:12px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;flex:none}
+a.c .ic svg{width:22px;height:22px}
+a.c b{display:block;font:600 17px 'Space Grotesk',sans-serif;margin-bottom:2px}
+a.c span{color:var(--mut);font-size:14px}
+a.c.pri{background:var(--red);border-color:var(--red);color:#fff}
+a.c.pri span{color:#FFE1DF}a.c.pri .ic{background:rgba(255,255,255,.18)}
+a.c.pri:hover{border-color:#B80500}
+</style>
+</head>
+<body>
+<main class="ax-main" style="max-width:1100px">
+  <div class="ola" id="ola"></div><p>O que você vai fazer agora?</p>
+
+  <div class="grupo">Dia a dia</div>
+  <div class="cards">
+    <a class="c pri" href="cupons.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div><b>Registrar anual vendido</b><span>Gerar o cupom, enviar no WhatsApp e ver as indicações. Fica em Sorteio e indicações.</span></div></a>
+    <a class="c" href="leads.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><div><b>Central de Leads</b><span>Assumir os leads novos, registrar contatos e agendamentos.</span></div></a>
+    <a class="c" href="dia.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div><div><b>Missões e Lançar dia</b><span>O que fazer hoje e, no fim do dia, os números do dia.</span></div></a>
+    <a class="c" href="imprimir.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><div><b>Imprimir cupons</b><span>Folhas com cupons numerados para a urna.</span></div></a>
+  </div>
+
+  <div class="grupo">Acompanhar</div>
+  <div class="cards">
+    <a class="c" href="painel.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div><div><b>Painel de Lançamento</b><span>Vendas, lotes, funil e resultado por consultor.</span></div></a>
+  </div>
+
+  <div class="grupo">Ajuda e materiais</div>
+  <div class="cards">
+    <a class="c" href="passo-a-passo-axifit.pdf" target="_blank"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><div><b>Passo a passo (PDF)</b><span>O fluxo de cada situação numa folha só.</span></div></a>
+    <a class="c" href="guia.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></div><div><b>Guia do lançamento</b><span>Regras, valores, alinhamento da reunião e frases para usar.</span></div></a>
+    <a class="c" href="termo.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><b>Termo de matrícula</b><span>As regras do contrato explicadas.</span></div></a>
+    <a class="c" href="documentos.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><div><b>Documentos e ajuda</b><span>Todos os materiais num lugar só.</span></div></a>
+    <a class="c" href="captura.html?c=lancamento" target="_blank"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div><div><b>Página de cadastro</b><span>O link dos anúncios e do QR Code.</span></div></a>
+  </div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+(async function(){
+  await axEntrar('index.html');
+  axTopo('Hub do Lançamento','Nova AxiFit · novas instalações, sala de bike e nova metodologia','index.html');
+  const h=new Date().getHours();
+  $('ola').textContent=(h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+', '+(AX_USER.papel==='admin'?'Administrador':primeiroNome(AX_USER.nome))+'!';
+})();
+</script>
+</body>
+</html>
