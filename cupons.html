@@ -231,7 +231,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
   </div>
   <div class="lin">
     <div class="campo"><label for="v-data">Data</label><input id="v-data" type="date"></div>
-    <div class="campo"><label for="v-cons">Consultor</label><input id="v-cons" list="dl-equipe"></div>
+    <div class="campo" data-c="cons"><label for="v-cons">Consultor responsável</label><select id="v-cons"></select><small class="sub" id="v-lanc" style="display:block;margin-top:4px"></small></div>
   </div>
   <div class="campo" id="v-ind-c"><label for="v-ind">Indicado por (opcional)</label><input id="v-ind" list="dl-indicadores" placeholder="Nome ou código de quem indicou"><datalist id="dl-indicadores"></datalist><div class="info" id="v-ind-info"></div></div>
   <div class="campo"><label for="v-obs">Observação</label><input id="v-obs"></div>
@@ -446,7 +446,7 @@ function renderKpis(){
 }
 function linhaVenda(l){
   if(l.venda_tipo==='ja_anual'){const r=l.respostas||{};return '<span class="sub">Sem compra no lançamento'+(r.plano_valor?'<br>Pagou '+brl(r.plano_valor)+(r.plano_valor_mensal?' ('+brl(r.plano_valor_mensal)+'/mês)':''):'')+(r.plano_fim?'<br>Anual até '+dataBR(r.plano_fim):'')+'</span>'}
-  return '<div>'+esc(LOTE[l.venda_lote]||'')+' · '+(l.venda_parcelas||12)+'x '+brl(l.venda_parcela)+'</div><div class="sub">'+dataBR(l.venda_data)+(l.venda_consultor?' · '+esc(l.venda_consultor):'')+'</div>';
+  return '<div>'+esc(LOTE[l.venda_lote]||'')+' · '+(l.venda_parcelas||12)+'x '+brl(l.venda_parcela)+'</div><div class="sub">'+dataBR(l.venda_data)+(l.venda_consultor?' · '+esc(l.venda_consultor):'')+(l.venda_lancado_por&&l.venda_lancado_por!==l.venda_consultor?' · lançado por '+esc(l.venda_lancado_por):'')+'</div>';
 }
 function renderPart(){
   const q=norm($('b-part').value),qd=q.replace(/\D/g,'');
@@ -495,7 +495,7 @@ function abrirVenda(id,tipo){
   $('v-erro').textContent='';document.querySelectorAll('#m-venda .campo').forEach(c=>c.classList.remove('inv'));
   $('v-busca').value='';$('v-achados').hidden=true;
   document.querySelectorAll('input[name=v-tipo]').forEach(r=>r.checked=false);
-  $('v-mat').value='';$('v-lote').value=loteAtual();$('v-qtd').value=12;$('v-parc').value='';$('v-data').value=hoje();$('v-cons').value=usuario||'';$('v-obs').value='';$('v-ind').value='';
+  $('v-mat').value='';$('v-lote').value=loteAtual();$('v-qtd').value=12;$('v-parc').value='';$('v-data').value=hoje();$('v-obs').value='';$('v-ind').value='';
   const l=vendaLead;
   $('v-desfazer').hidden=!(l&&ehPart(l));$('v-desfazer').dataset.arm='';$('v-desfazer').textContent='Desfazer registro';
   $('v-tit').textContent=l&&ehPart(l)?'Editar registro':(tipo==='ja_anual'?'Cadastrar aluno que já tem anual':'Registrar anual vendido');
@@ -506,12 +506,13 @@ function abrirVenda(id,tipo){
     if(l.venda_parcela)$('v-parc').value=String(l.venda_parcela).replace('.',',');
     if(l.venda_parcelas)$('v-qtd').value=l.venda_parcelas;
     if(l.venda_data)$('v-data').value=String(l.venda_data).slice(0,10);
-    if(l.venda_consultor)$('v-cons').value=l.venda_consultor;
     $('v-obs').value=l.venda_obs||'';
   }else{$('v-nome').value='';$('v-wpp').value=''}
   if(tipo){const r=document.querySelector('input[name=v-tipo][value='+tipo+']');if(r)r.checked=true}
   $('op-outro').hidden=!(regras().ja_anual_qualquer_plano||(l&&l.venda_tipo==='outro'));
-  if(!ehGestor()){$('v-cons').value=(l&&l.venda_consultor)||usuario;$('v-cons').readOnly=true}else $('v-cons').readOnly=false;
+  {const eq=nomesEquipe(),atual=(l&&(l.venda_consultor||l.consultora_id))||(eq.includes(usuario)?usuario:'');const ops=[...eq];if(atual&&!ops.includes(atual))ops.push(atual);
+   $('v-cons').innerHTML='<option value="">Escolha quem atendeu</option>'+ops.map(n=>'<option'+(n===atual?' selected':'')+'>'+esc(n)+'</option>').join('');
+   const lp=(l&&l.venda_lancado_por)||usuario;$('v-lanc').textContent='Lançado por '+lp+(l&&l.venda_lancado_por?'':' (você)')+'. O responsável é quem atendeu o aluno.'}
   $('v-desfazer').hidden=!(ehGestor()&&l&&(ehPart(l)||l.venda_tipo==='outro'));
   mostrarSel();tipoMudou();
   $('dl-indicadores').innerHTML=leads.filter(x=>x.codigo).map(x=>'<option value="'+esc(x.codigo)+'">'+esc(x.nome)+'</option>').join('');
@@ -585,12 +586,13 @@ async function salvarVenda(){
     if(v){const i=leads.find(x=>x.codigo&&x.codigo.toUpperCase()===v.toUpperCase());if(!i){err.textContent='O código de quem indicou não foi encontrado.';return}if(l&&i.id===l.id){err.textContent='A pessoa não pode indicar a si mesma.';return}indCod=i}
   }
   if(t==='outro'&&!indCod&&!(l&&l.indicado_por_codigo)){err.textContent='Outro plano só se registra para amigo indicado. Informe quem indicou.';return}
-  const cons=ehGestor()?($('v-cons').value.trim()||usuario||null):usuario;
+  const cons=$('v-cons').value.trim();if(!cons){document.querySelector('[data-c=cons]').classList.add('inv');err.textContent='Escolha o consultor responsável pela venda.';return}
+  const lancado=(l&&l.venda_lancado_por)||usuario||null;
   const venda=t==='outro'
-    ?{venda_anual:false,venda_tipo:'outro',venda_lote:null,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null,status:'convertido'}
+    ?{venda_anual:false,venda_tipo:'outro',venda_lote:null,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null,status:'convertido'}
     :t==='ja_anual'
-    ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null}
-    :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
+    ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null}
+    :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
   const btn=$('v-salvar');btn.disabled=true;btn.textContent='Salvando...';
   try{
     let id;
@@ -646,7 +648,7 @@ async function desfazerVenda(){
     // cupom que esta venda tinha gerado para quem indicou
     const dado=cupons.find(c=>c.tipo==='indicacao'&&c.indicado_lead_id===l.id);
     if(dado)await api(P+'cupons?id=eq.'+dado.id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
-    await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({venda_anual:false,venda_tipo:null,venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:null,venda_consultor:null,venda_obs:null,status:'novo',updated_at:new Date().toISOString()})});
+    await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({venda_anual:false,venda_tipo:null,venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:null,venda_consultor:null,venda_lancado_por:null,venda_obs:null,status:'novo',updated_at:new Date().toISOString()})});
     await recarregar();
     if(l.indicado_por_codigo){const i=porCodigo(l.indicado_por_codigo);if(i){await sincronizar(i);await recarregar()}}
     fechar('m-venda');toast('Registro desfeito');
@@ -812,8 +814,8 @@ async function importar(){
 
 /* ---------- exportar ---------- */
 function exportarCupons(){
-  const linhas=[['Cupom','Participante','WhatsApp','Código','Origem do cupom','Amigo que gerou','Data']];
-  cupons.slice().sort((a,b)=>a.numero-b.numero).forEach(c=>{const l=porId(c.lead_id)||{},a=c.indicado_lead_id&&porId(c.indicado_lead_id);linhas.push([nCupom(c.numero),l.nome||'',l.whatsapp||'',l.codigo||'',c.tipo==='compra'?'Compra do anual':'Indicação',a?a.nome:'',dataBR(c.created_at)])});
+  const linhas=[['Cupom','Participante','WhatsApp','Código','Origem do cupom','Amigo que gerou','Data','Consultor responsável','Lançado por']];
+  cupons.slice().sort((a,b)=>a.numero-b.numero).forEach(c=>{const l=porId(c.lead_id)||{},a=c.indicado_lead_id&&porId(c.indicado_lead_id);linhas.push([nCupom(c.numero),l.nome||'',l.whatsapp||'',l.codigo||'',c.tipo==='compra'?'Compra do anual':'Indicação',a?a.nome:'',dataBR(c.created_at),(c.tipo==='compra'?l.venda_consultor:(a&&a.venda_consultor))||'',(c.tipo==='compra'?l.venda_lancado_por:(a&&a.venda_lancado_por))||''])});
   const csv='﻿'+linhas.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='cupons-sorteio-axifit.csv';document.body.appendChild(a);a.click();a.remove();
 }

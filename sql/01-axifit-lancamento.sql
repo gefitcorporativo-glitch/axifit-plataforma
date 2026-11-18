@@ -181,3 +181,6 @@ create table if not exists axifit_cupom_impressoes (
 );
 create unique index if not exists axifit_cupom_impressoes_serie on axifit_cupom_impressoes (academia_id, campanha_slug, de) where tipo = 'impressao';
 alter table axifit_cupom_impressoes disable row level security;
+
+-- 10) Venda com consultor responsável e quem lançou (17/11/2026)
+alter table axifit_leads add column if not exists venda_lancado_por text;
