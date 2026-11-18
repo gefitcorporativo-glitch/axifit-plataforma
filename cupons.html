@@ -384,7 +384,7 @@ function nomesEquipe(){const a=acessos().map(x=>x.nome);return a.length?a:(Array
 let acsEdit=[];
 function preencherEquipe(){renderPrecos();
   $('dl-equipe').innerHTML=nomesEquipe().map(n=>'<option value="'+esc(n)+'">').join('');
-  acsEdit=(acessos().length?acessos():ACESSOS_INICIAIS).map(a=>({...a,pin:''}));renderAcs();
+  acsEdit=(acessos().length?acessos():ACESSOS_INICIAIS).map(a=>({...a,orig:a.pin_hash?a.nome:'',pin:''}));renderAcs();
   const r=regras();$('rg-qualquer').checked=!!r.ja_anual_qualquer_plano;$('rg-vaga').checked=!!r.vaga_extra;
 }
 function renderAcs(){
@@ -396,7 +396,8 @@ async function salvarAcessos(){
   for(const a of acsEdit){
     const nome=a.nome.trim();if(!nome)continue;
     if(vistos.has(norm(nome))){toast('Nome repetido: '+nome);return}vistos.add(norm(nome));
-    let h=(a.nome===nome&&a.pin_hash)||null;
+    if(a.orig&&norm(a.orig)!==norm(nome)&&!a.pin){toast('Você trocou o nome de '+a.orig+'. Digite um PIN novo para '+nome+' e salve.');return}
+    let h=(a.orig&&norm(a.orig)!==norm(nome))?null:((a.nome===nome&&a.pin_hash)||null);
     const ant=acessos().find(x=>x.nome===nome);if(!h&&ant)h=ant.pin_hash;
     if(a.pin){if(!/^\d{4,8}$/.test(a.pin)){toast('PIN de '+nome+': 4 a 8 números');return}h=await hashDe(nome,a.pin)}
     out.push({nome,papel:['direcao','lideranca'].includes(a.papel)?a.papel:'consultor',pin_hash:h||null});
