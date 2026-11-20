@@ -87,6 +87,11 @@ td .sub{font-size:12.5px;color:var(--mut)}
 .op input{width:auto;flex:none;margin-top:4px;accent-color:#E10600}
 .op small{display:block;color:var(--mut);font-size:12.5px}
 .op:has(input:checked){border-color:var(--red);background:var(--red2)}
+.chk{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin:2px 0 10px;cursor:pointer}.chk input{width:auto;margin-top:3px;accent-color:#E10600}
+.cond{border:1px dashed #D5D8DE;border-radius:12px;padding:10px 12px;margin:6px 0 12px}
+.cond.on{border:1.5px solid #E10600;background:#FFF5F4}
+.cond .av{font-size:13.5px;color:#B42318;font-weight:600;margin:4px 0 8px}
+.aut-ok{background:#E8F5EE;color:#0F7A40;border-radius:8px;padding:6px 10px;font-size:13px}
 .achados{border:1px solid var(--line);border-radius:10px;max-height:190px;overflow:auto;margin-top:6px}
 .achado{display:flex;justify-content:space-between;gap:10px;padding:8px 11px;border-top:1px solid var(--line);cursor:pointer;font-size:14px}
 .achado:first-child{border-top:0}
@@ -211,7 +216,12 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
   <div class="lin" style="margin-top:12px">
     <div class="campo" data-c="mat"><label for="v-mat">Matrícula no SCA</label><input id="v-mat" inputmode="numeric" placeholder="Ex.: 2234"></div>
     <div class="campo" data-c="nome"><label for="v-nome">Nome completo</label><input id="v-nome"></div>
-    <div class="campo" data-c="wpp"><label for="v-wpp">WhatsApp</label><input id="v-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
+    <div class="campo" data-c="wpp"><label for="v-wpp" id="v-wpp-lb">WhatsApp</label><input id="v-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
+  </div>
+  <label class="chk"><input type="checkbox" id="v-dep" onchange="depMudou()"><span>Aluno sem WhatsApp próprio (menor de idade ou dependente): usar o WhatsApp do responsável financeiro</span></label>
+  <div class="lin" id="v-dep-c" hidden>
+    <div class="campo" data-c="resp"><label for="v-resp">Nome do responsável financeiro</label><input id="v-resp" placeholder="Ex.: Maria Souza (mãe)"></div>
+    <div class="campo" data-c="wpp2"><label for="v-wpp2">Confirme o WhatsApp do responsável</label><input id="v-wpp2" inputmode="tel" placeholder="Digite de novo"></div>
   </div>
   <div class="campo" data-c="tipo"><span class="lb">Situação</span>
     <div class="ops">
@@ -228,6 +238,14 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
       <div class="campo"><label for="v-qtd">Parcelas</label><input id="v-qtd" type="number" min="1" max="12" value="12" oninput="calcTotal()"></div>
     </div>
     <p class="total" id="v-total"></p>
+    <div class="cond" id="v-cond">
+      <div class="info" id="v-tab"></div>
+      <div class="campo" style="margin-top:8px"><label for="v-benef">Benefício extra (opcional)</label><input id="v-benef" placeholder="Ex.: 2 meses a mais" oninput="condMudou()"></div>
+      <div id="v-cond-c" hidden>
+        <div class="av">Condição especial: valor diferente da tabela ou benefício extra. Precisa de motivo e da autorização da liderança (PIN de Vinícius ou Damião).</div>
+        <div class="campo" data-c="cmot"><label for="v-cmot">Motivo da condição especial</label><input id="v-cmot" placeholder="Ex.: família com 3 matrículas, autorizado pelo Vinícius"></div>
+      </div>
+    </div>
   </div>
   <div class="lin">
     <div class="campo"><label for="v-data">Data</label><input id="v-data" type="date"></div>
@@ -237,7 +255,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
   <div class="campo"><label for="v-obs">Observação</label><input id="v-obs"></div>
   <div class="erro" id="v-erro"></div>
   <div class="rodape-m">
-    <button class="btn perigo" id="v-desfazer" hidden onclick="desfazerVenda()">Desfazer registro</button>
+    <button class="btn perigo" id="v-desfazer" hidden onclick="desfazerVenda()">Excluir lançamento</button>
     <span style="flex:1"></span>
     <button class="btn" onclick="fechar('m-venda')">Cancelar</button>
     <button class="btn pri" id="v-salvar" onclick="salvarVenda()">Salvar e gerar cupom</button>
@@ -245,6 +263,20 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
 </div></div>
 
 <!-- cupom -->
+<div class="fundo" id="m-aut" style="z-index:60"><div class="modal">
+  <div class="mhead"><h2 id="a-tit">Autorização da liderança</h2><button class="x" onclick="autFim(null)" aria-label="Fechar">×</button></div>
+  <p class="info" id="a-txt" style="margin-top:0"></p>
+  <div id="a-mot-c">
+    <div class="campo" data-c="amot"><label for="a-mot">Motivo</label><select id="a-mot" onchange="$('a-outro-c').hidden=this.value!=='Outro'"></select></div>
+    <div class="campo" id="a-outro-c" hidden><label for="a-outro">Explique</label><input id="a-outro"></div>
+  </div>
+  <div class="lin">
+    <div class="campo"><label for="a-quem">Quem autoriza</label><select id="a-quem"></select></div>
+    <div class="campo"><label for="a-pin">PIN de quem autoriza</label><input id="a-pin" type="password" inputmode="numeric" autocomplete="off"></div>
+  </div>
+  <div class="erro" id="a-erro"></div>
+  <div class="rodape-m"><span style="flex:1"></span><button class="btn" onclick="autFim(null)">Cancelar</button><button class="btn pri" id="a-ok">Autorizar</button></div>
+</div></div>
 <div class="fundo" id="m-cupom"><div class="modal lg">
   <div class="mhead"><h2 id="c-tit">Cupom</h2><button class="x" onclick="fechar('m-cupom')" aria-label="Fechar">×</button></div>
   <div class="grid2">
@@ -257,7 +289,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 24px 30px;color:var(--mut);font-
       </ol>
       <div class="lb" style="font-size:13px;font-weight:600;margin:16px 0 6px">Mensagem</div>
       <div class="msg" id="c-msg"></div>
-      <div class="acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" onclick="copiar(linkAtual,'Link copiado')">Copiar link do aluno</button><button class="btn sm" id="c-editar">Editar registro</button></div>
+      <div class="acoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" onclick="copiar(linkAtual,'Link copiado')">Copiar link do aluno</button><button class="btn sm" id="c-editar">Corrigir ou excluir</button></div>
       <div class="amigos" id="c-amigos"></div>
     </div>
   </div>
@@ -508,12 +540,14 @@ function abrirVenda(id,tipo){
     if(l.venda_data)$('v-data').value=String(l.venda_data).slice(0,10);
     $('v-obs').value=l.venda_obs||'';
   }else{$('v-nome').value='';$('v-wpp').value=''}
+  {const c=(l&&l.venda_condicao)||{};$('v-benef').value=c.beneficio||'';$('v-cmot').value=c.motivo||'';
+   $('v-dep').checked=!!(l&&l.wpp_responsavel);$('v-resp').value=(l&&l.responsavel_nome)||'';$('v-wpp2').value=(l&&l.wpp_responsavel&&l.whatsapp)||'';depMudou()}
   if(tipo){const r=document.querySelector('input[name=v-tipo][value='+tipo+']');if(r)r.checked=true}
   $('op-outro').hidden=!(regras().ja_anual_qualquer_plano||(l&&l.venda_tipo==='outro'));
   {const eq=nomesEquipe(),atual=(l&&(l.venda_consultor||l.consultora_id))||(eq.includes(usuario)?usuario:'');const ops=[...eq];if(atual&&!ops.includes(atual))ops.push(atual);
    $('v-cons').innerHTML='<option value="">Escolha quem atendeu</option>'+ops.map(n=>'<option'+(n===atual?' selected':'')+'>'+esc(n)+'</option>').join('');
    const lp=(l&&l.venda_lancado_por)||usuario;$('v-lanc').textContent='Lançado por '+lp+(l&&l.venda_lancado_por?'':' (você)')+'. O responsável é quem atendeu o aluno.'}
-  $('v-desfazer').hidden=!(ehGestor()&&l&&(ehPart(l)||l.venda_tipo==='outro'));
+  $('v-desfazer').hidden=!(l&&(ehPart(l)||l.venda_tipo==='outro'));
   mostrarSel();tipoMudou();
   $('dl-indicadores').innerHTML=leads.filter(x=>x.codigo).map(x=>'<option value="'+esc(x.codigo)+'">'+esc(x.nome)+'</option>').join('');
   abrir('m-venda');
@@ -554,7 +588,44 @@ function precoLote(){
   const p=Number(PRECO()[$('v-lote').value][t==='novo'?'novo':'cliente']);
   $('v-parc').value=p.toFixed(2).replace('.',',');calcTotal();
 }
-function calcTotal(){const p=num($('v-parc').value),q=parseInt($('v-qtd').value,10)||0;$('v-total').textContent=isNaN(p)||!q?'':'Total do contrato: '+brl(p*q)}
+function calcTotal(){const p=num($('v-parc').value),q=parseInt($('v-qtd').value,10)||0;$('v-total').textContent=isNaN(p)||!q?'':'Total do contrato: '+brl(p*q);condMudou()}
+function tabelaAtual(){const t=tipoAtual();if(t!=='novo'&&t!=='renovacao')return null;const p=Number(((PRECO()||{})[$('v-lote').value]||{})[t==='novo'?'novo':'cliente']);return p>0?p:null}
+function ehCondicao(){const tb=tabelaAtual();if(!tb)return false;const p=num($('v-parc').value),q=parseInt($('v-qtd').value,10)||0;const tot=(p>0&&q)?p*q:0;return Math.abs(tot-tb*12)>0.5||!!$('v-benef').value.trim()}
+function condMudou(){const tb=tabelaAtual();$('v-cond').hidden=!tb;if(!tb)return;$('v-tab').textContent='Valor de tabela: 12x '+brl(tb)+' = '+brl(tb*12)+'. Menos parcelas com o mesmo total não é condição especial.';const c=ehCondicao();$('v-cond').classList.toggle('on',c);$('v-cond-c').hidden=!c}
+function depMudou(){const d=$('v-dep').checked;$('v-dep-c').hidden=!d;$('v-wpp-lb').textContent=d?'WhatsApp do responsável':'WhatsApp'}
+$('v-wpp2').addEventListener('input',()=>{const w=$('v-wpp2');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
+/* autorização da liderança (Vinícius ou Damião) */
+let autResolve=null;
+function autorizadores(){return acessos().filter(a=>a.pin_hash&&(a.papel==='lideranca'||a.papel==='direcao'))}
+function pedirAut(titulo,texto,motivos){return new Promise(res=>{
+  autResolve=res;$('a-tit').textContent=titulo;$('a-txt').textContent=texto;$('a-erro').textContent='';$('a-pin').value='';$('a-outro').value='';
+  $('a-mot-c').hidden=!motivos;$('a-outro-c').hidden=true;
+  if(motivos)$('a-mot').innerHTML='<option value="">Escolha o motivo</option>'+motivos.map(m=>'<option>'+esc(m)+'</option>').join('');
+  const au=autorizadores();$('a-quem').innerHTML='<option value="">Escolha</option>'+au.map(a=>'<option value="'+esc(a.nome)+'">'+esc(a.nome)+' · '+esc(PAPEL[a.papel])+'</option>').join('')+'<option value="__admin">Administrador</option>';
+  abrir('m-aut');setTimeout(()=>$(motivos?'a-mot':'a-quem').focus(),50);
+})}
+function autFim(v){fechar('m-aut');const r=autResolve;autResolve=null;if(r)r(v)}
+$('a-pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('a-ok').click()});
+$('a-ok').onclick=async()=>{
+  const er=$('a-erro');er.textContent='';
+  let motivo=null;
+  if(!$('a-mot-c').hidden){motivo=$('a-mot').value;if(!motivo){er.textContent='Escolha o motivo.';return}if(motivo==='Outro'){const o=$('a-outro').value.trim();if(!o){er.textContent='Explique o motivo.';return}motivo='Outro: '+o}}
+  const q=$('a-quem').value,pin=$('a-pin').value.trim();
+  if(!q){er.textContent='Escolha quem autoriza.';return}
+  if(!/^\d{4,8}$/.test(pin)){er.textContent='Digite o PIN de quem autoriza.';return}
+  let ok=false,nome=q;
+  if(q==='__admin'){ok=(await sha('axifit:'+pin))===camp.acesso_pin_hash;nome='Administrador'}
+  else{const a=autorizadores().find(x=>x.nome===q);ok=!!a&&a.pin_hash===await hashDe(q,pin)}
+  if(!ok){er.textContent='PIN incorreto.';$('a-pin').select();return}
+  autFim({autorizado_por:nome,motivo});
+};
+async function registrarAjuste(reg){
+  try{await api(P+'venda_ajustes',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({academia_id:AC,feito_por:usuario,...reg})})}
+  catch(e){toast('Atenção: o ajuste foi feito, mas o histórico não foi gravado. Rode o SQL dos ajustes.')}
+}
+const CAMPOS_VENDA=['matricula','nome','whatsapp_norm','venda_tipo','venda_lote','venda_parcela','venda_parcelas','venda_total','venda_data','venda_consultor','venda_condicao','responsavel_nome'];
+function condCore(c){return c?{tabela_total:Number(c.tabela_total),cobrado_total:Number(c.cobrado_total),parcelas:Number(c.parcelas),beneficio:c.beneficio||null,motivo:c.motivo||null}:null}
+function fotoVenda(l){const o={};CAMPOS_VENDA.forEach(k=>o[k]=l?l[k]??null:null);o.venda_condicao=condCore(o.venda_condicao);['venda_parcela','venda_total'].forEach(k=>{if(o[k]!=null)o[k]=Number(o[k])});if(o.venda_data)o.venda_data=String(o.venda_data).slice(0,10);return o}
 $('v-ind').addEventListener('input',()=>{const v=$('v-ind').value.trim();const i=leads.find(x=>x.codigo&&x.codigo.toUpperCase()===v.toUpperCase());$('v-ind-info').textContent=v?(i?'Quem indicou: '+i.nome+(ehPart(i)?'':' (ainda não participa do sorteio)'):'Código não encontrado. Use a lista de sugestões.'):''});
 $('v-wpp').addEventListener('input',()=>{const w=$('v-wpp');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
 
@@ -574,10 +645,14 @@ async function salvarVenda(){
   const parc=num($('v-parc').value),qtd=parseInt($('v-qtd').value,10)||12;
   if(t&&t!=='ja_anual'&&!(parc>0)){document.querySelector('[data-c=parc]').classList.add('inv');ok=false}
   if(!ok){err.textContent='Confira os campos marcados.';return}
-  const wn='55'+dig;
-  // mesmo WhatsApp = mesma pessoa
-  let l=vendaLead||leads.find(x=>x.whatsapp_norm===wn)||null;
-  if(!vendaLead&&l&&ehPart(l)){err.textContent='Esse WhatsApp já está registrado como '+l.nome+'. Abra pela lista de participantes para editar.';return}
+  const wn='55'+dig,dep=$('v-dep').checked,resp=$('v-resp').value.trim().replace(/\s+/g,' ');
+  if(dep){
+    if(!resp){document.querySelector('[data-c=resp]').classList.add('inv');err.textContent='Informe o nome do responsável financeiro.';return}
+    if($('v-wpp2').value.replace(/\D/g,'')!==dig){document.querySelector('[data-c=wpp2]').classList.add('inv');err.textContent='Os dois WhatsApps do responsável não são iguais.';return}
+  }
+  // mesmo WhatsApp = mesma pessoa (menos quando usa o WhatsApp do responsável)
+  let l=vendaLead||(dep?null:leads.find(x=>x.whatsapp_norm===wn&&!x.wpp_responsavel))||null;
+  if(!vendaLead&&l&&ehPart(l)){err.textContent='Esse WhatsApp já está registrado como '+l.nome+'. Se for filho ou dependente, marque "Aluno sem WhatsApp próprio". Se for a mesma pessoa, abra pela lista de participantes.';return}
   const outroMat=leads.find(x=>x.matricula&&String(x.matricula).toUpperCase()===mat.toUpperCase()&&(!l||x.id!==l.id));
   if(outroMat){err.textContent='A matrícula '+mat+' já está registrada para '+outroMat.nome+'.';document.querySelector('[data-c=mat]').classList.add('inv');return}
   let indCod=null;
@@ -588,11 +663,33 @@ async function salvarVenda(){
   if(t==='outro'&&!indCod&&!(l&&l.indicado_por_codigo)){err.textContent='Outro plano só se registra para amigo indicado. Informe quem indicou.';return}
   const cons=$('v-cons').value.trim();if(!cons){document.querySelector('[data-c=cons]').classList.add('inv');err.textContent='Escolha o consultor responsável pela venda.';return}
   const lancado=(l&&l.venda_lancado_por)||usuario||null;
+  const cond=(t==='novo'||t==='renovacao')&&ehCondicao();
+  if(cond&&!$('v-cmot').value.trim()){document.querySelector('[data-c=cmot]').classList.add('inv');err.textContent='Informe o motivo da condição especial.';return}
   const venda=t==='outro'
     ?{venda_anual:false,venda_tipo:'outro',venda_lote:null,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null,status:'convertido'}
     :t==='ja_anual'
     ?{venda_anual:false,venda_tipo:'ja_anual',venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null}
     :{venda_anual:true,venda_tipo:t,venda_lote:$('v-lote').value,venda_parcela:Math.round(parc*100)/100,venda_parcelas:qtd,venda_total:Math.round(parc*qtd*100)/100,venda_data:$('v-data').value||hoje(),venda_consultor:cons,venda_lancado_por:lancado,venda_obs:$('v-obs').value.trim()||null,status:'convertido'};
+  // condição especial e quem é responsável
+  if(cond){const tb=tabelaAtual(),tot=Math.round(parc*qtd*100)/100,desc=Math.round((tb*12-tot)*100)/100;
+    venda.venda_condicao={tabela_parcela:tb,tabela_total:Math.round(tb*1200)/100,cobrado_total:tot,parcelas:qtd,desconto:desc,desconto_pct:Math.round(desc/(tb*12)*1000)/10,beneficio:$('v-benef').value.trim()||null,motivo:$('v-cmot').value.trim()}}
+  else venda.venda_condicao=null;
+  venda.wpp_responsavel=dep;venda.responsavel_nome=dep?resp:null;
+  // correção de uma venda já lançada ou condição especial: pede a liderança
+  const eraVenda=!!(vendaLead&&['novo','renovacao','upgrade','outro'].includes(vendaLead.venda_tipo));
+  const antes=eraVenda?fotoVenda(vendaLead):null;
+  const depois={...fotoVenda({...vendaLead,...venda,matricula:mat,nome,whatsapp_norm:wn})};
+  const mudou=eraVenda&&JSON.stringify(antes)!==JSON.stringify(depois);
+  const condAntes=vendaLead&&vendaLead.venda_condicao,condNova=cond&&JSON.stringify(condCore(venda.venda_condicao))!==JSON.stringify(condCore(condAntes));
+  let aut=null;
+  if(mudou||condNova){
+    aut=await pedirAut(mudou?'Corrigir lançamento':'Condição especial',
+      mudou?'Esta venda já foi lançada. Para corrigir, a liderança precisa autorizar com o PIN.':'Valor diferente da tabela ou benefício extra. A liderança precisa autorizar com o PIN.',
+      mudou?['Erro de digitação','Valor errado','Consultor errado','Tipo de plano errado','Lote errado','Condição especial','Outro']:null);
+    if(!aut){err.textContent='Não foi salvo: falta a autorização da liderança.';return}
+  }
+  if(cond){if(condNova&&aut){venda.venda_condicao.autorizado_por=aut.autorizado_por;venda.venda_condicao.autorizado_em=new Date().toISOString();venda.venda_condicao.lancado_por=usuario}
+    else if(condAntes){venda.venda_condicao.autorizado_por=condAntes.autorizado_por;venda.venda_condicao.autorizado_em=condAntes.autorizado_em;venda.venda_condicao.lancado_por=condAntes.lancado_por}}
   const btn=$('v-salvar');btn.disabled=true;btn.textContent='Salvando...';
   try{
     let id;
@@ -609,6 +706,9 @@ async function salvarVenda(){
       const r=await api(P+'leads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(novo)});
       id=r&&r[0]&&r[0].id;
     }
+    const ref=nome+(mat?' ('+mat+')':'');
+    if(mudou)await registrarAjuste({lead_id:id,lead_nome:ref,acao:'correcao',motivo:aut.motivo,antes,depois,autorizado_por:aut.autorizado_por});
+    if(condNova)await registrarAjuste({lead_id:id,lead_nome:ref,acao:'condicao',motivo:venda.venda_condicao.motivo,antes:null,depois:venda.venda_condicao,autorizado_por:aut.autorizado_por});
     await recarregar();
     const eu=porId(id);
     await sincronizar(eu);
@@ -638,20 +738,23 @@ async function sincronizar(l){
   }
 }
 async function desfazerVenda(){
-  const b=$('v-desfazer');
-  if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Clique de novo para confirmar';return}
-  const l=vendaLead;if(!l)return;
+  const b=$('v-desfazer');const l=vendaLead;if(!l)return;
+  const meusC=cuponsDe(l),dadoC=cupons.find(c=>c.tipo==='indicacao'&&c.indicado_lead_id===l.id);
+  const nums=[...meusC,...(dadoC?[dadoC]:[])].map(c=>1000+Number(c.numero));
+  const aut=await pedirAut('Excluir lançamento','Excluir o lançamento de '+l.nome+'.'+(nums.length?' Os cupons Nº '+nums.join(', ')+' serão cancelados e o papel precisa sair da urna.':'')+' A liderança precisa autorizar com o PIN.',['Lançamento em duplicidade','Venda cancelada','Lançado no aluno errado','Teste','Outro']);
+  if(!aut)return;
   b.disabled=true;
   try{
+    await registrarAjuste({lead_id:l.id,lead_nome:l.nome+(l.matricula?' ('+l.matricula+')':''),acao:'exclusao',motivo:aut.motivo,antes:{...fotoVenda(l),cupons:nums},depois:null,autorizado_por:aut.autorizado_por});
     const meus=cuponsDe(l);
     if(meus.length)await api(P+'cupons?lead_id=eq.'+l.id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
     // cupom que esta venda tinha gerado para quem indicou
     const dado=cupons.find(c=>c.tipo==='indicacao'&&c.indicado_lead_id===l.id);
     if(dado)await api(P+'cupons?id=eq.'+dado.id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
-    await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({venda_anual:false,venda_tipo:null,venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:null,venda_consultor:null,venda_lancado_por:null,venda_obs:null,status:'novo',updated_at:new Date().toISOString()})});
+    await api(P+'leads?id=eq.'+l.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({venda_anual:false,venda_tipo:null,venda_lote:null,venda_parcela:null,venda_parcelas:null,venda_total:null,venda_data:null,venda_consultor:null,venda_lancado_por:null,venda_condicao:null,venda_obs:null,status:'novo',updated_at:new Date().toISOString()})});
     await recarregar();
     if(l.indicado_por_codigo){const i=porCodigo(l.indicado_por_codigo);if(i){await sincronizar(i);await recarregar()}}
-    fechar('m-venda');toast('Registro desfeito');
+    fechar('m-venda');toast(nums.length?'Lançamento excluído. Retire da urna os cupons Nº '+nums.join(', '):'Lançamento excluído');
   }catch(e){$('v-erro').textContent='Não foi possível desfazer: '+String(e.message).slice(0,160)}
   finally{b.disabled=false}
 }

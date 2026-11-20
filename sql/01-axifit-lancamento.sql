@@ -184,3 +184,22 @@ alter table axifit_cupom_impressoes disable row level security;
 
 -- 10) Venda com consultor responsável e quem lançou (17/11/2026)
 alter table axifit_leads add column if not exists venda_lancado_por text;
+
+-- 11) Condição especial, responsável financeiro e histórico de ajustes (20/11/2026)
+alter table axifit_leads add column if not exists venda_condicao jsonb;
+alter table axifit_leads add column if not exists wpp_responsavel boolean default false;
+alter table axifit_leads add column if not exists responsavel_nome text;
+create table if not exists axifit_venda_ajustes (
+  id uuid primary key default gen_random_uuid(),
+  academia_id text not null,
+  lead_id uuid,
+  lead_nome text,
+  acao text not null,
+  motivo text,
+  antes jsonb,
+  depois jsonb,
+  feito_por text,
+  autorizado_por text,
+  created_at timestamptz default now()
+);
+alter table axifit_venda_ajustes disable row level security;

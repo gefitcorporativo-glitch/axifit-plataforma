@@ -53,16 +53,26 @@
     <div><h2 class="sec">Funil dos leads</h2><div class="card pad funil" id="funil"></div></div>
     <div><h2 class="sec">Leads por dia (últimos 14 dias)</h2><div class="card pad"><div class="dias" id="dias"></div><div class="info" id="origens" style="margin-top:10px"></div></div></div>
   </div>
+  <div id="adm" hidden>
+    <h2 class="sec">Condições especiais <span class="sub" style="font-weight:400">· visível só para direção e administrador</span></h2>
+    <div class="card scroll"><table><thead><tr><th>Aluno</th><th>Tabela</th><th>Cobrado</th><th>Desconto</th><th>Benefício extra</th><th>Motivo</th><th>Autorizado por</th><th>Consultor</th></tr></thead><tbody id="t-cond"></tbody></table></div>
+    <h2 class="sec">Correções e exclusões</h2>
+    <div class="card scroll"><table><thead><tr><th>Quando</th><th>Ação</th><th>Aluno</th><th>Motivo</th><th>O que mudou</th><th>Feito por</th><th>Autorizado por</th></tr></thead><tbody id="t-aj"></tbody></table></div>
+  </div>
 </main>
 <footer class="ax-rod">Metodologia GeFit</footer>
 <script>
-let leads=[],cupons=[];
+let leads=[],cupons=[],ajustes=null;
 (async function(){
   await axEntrar('painel.html');
   axTopo('Painel de Lançamento','Nova AxiFit · novas instalações, sala de bike e nova metodologia','painel.html');
   $('inv-c').hidden=!ehGestor();
   try{[leads,cupons]=await Promise.all([axLeads(),axCupons()])}catch(e){toast('Erro ao carregar');return}
   const inv=AX_CAMP.investimento||{};['trafego','mkt','outros'].forEach(k=>{$('i-'+k).value=inv[k]?String(inv[k]).replace('.',','):''});
+  if(['admin','direcao'].includes(AX_USER.papel)){
+    $('adm').hidden=false;
+    try{ajustes=(await axApi(AXI.P+'venda_ajustes?academia_id=eq.'+AXI.AC+'&select=*&order=created_at.desc&limit=500'))||[]}catch(e){ajustes=null}
+  }
   render();
 })();
 const vendaAnual=l=>!!l.venda_anual;
@@ -109,7 +119,20 @@ function render(){
   const cont=ds.map(d=>lk.filter(l=>iso(l.created_at)===d).length),mx=Math.max(1,...cont);
   $('dias').innerHTML=ds.map((d,i)=>'<div class="d'+(d===hoje()?' h':'')+'"><b>'+(cont[i]||'')+'</b><i style="height:'+Math.round(cont[i]/mx*100)+'%"></i>'+d.slice(8)+'</div>').join('');
   const ori={};lk.forEach(l=>{const o={trafego_pago:'Anúncios',indicacao_digital:'Indicação',indicacao:'Indicação',whatsapp:'WhatsApp',instagram:'Instagram',balcao:'Balcão'}[l.origem]||'Outros';ori[o]=(ori[o]||0)+1});
+  renderAdm();
   $('origens').textContent='Origem: '+(Object.entries(ori).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+' '+v).join(' · ')||'sem leads ainda');
+}
+function renderAdm(){
+  if($('adm').hidden)return;
+  const cs=leads.filter(l=>l.venda_condicao&&l.venda_anual);
+  const tot=cs.reduce((a,l)=>a+Number(l.venda_condicao.desconto||0),0);
+  $('t-cond').innerHTML=cs.length?cs.map(l=>{const c=l.venda_condicao;return '<tr><td><b>'+esc(l.nome)+'</b><div class="sub">'+esc(l.matricula||'')+' · '+dataBR(l.venda_data)+'</div></td><td>'+brl(c.tabela_total)+'</td><td>'+brl(c.cobrado_total)+'<div class="sub">'+c.parcelas+'x</div></td><td><b>'+brl(c.desconto)+'</b><div class="sub">'+(c.desconto_pct||0).toString().replace('.',',')+'%</div></td><td>'+esc(c.beneficio||'')+'</td><td>'+esc(c.motivo||'')+'</td><td>'+esc(c.autorizado_por||'')+'</td><td>'+esc(l.venda_consultor||'')+'</td></tr>'}).join('')+'<tr><td colspan="3"><b>Total de desconto concedido</b></td><td colspan="5"><b>'+brl(tot)+'</b> em '+cs.length+' venda(s)</td></tr>':'<tr><td colspan="8" class="sub">Nenhuma condição especial até agora.</td></tr>';
+  if(ajustes===null){$('t-aj').innerHTML='<tr><td colspan="7" class="sub">Rode o SQL dos ajustes para ver o histórico.</td></tr>';return}
+  const AC_N={correcao:'Correção',exclusao:'Exclusão',condicao:'Condição especial'};
+  const dif=a=>{if(a.acao==='exclusao')return 'Excluído'+(a.antes&&a.antes.cupons&&a.antes.cupons.length?'. Cupons cancelados: '+a.antes.cupons.join(', '):'');if(a.acao==='condicao'){const c=a.depois||{};return brl(c.cobrado_total)+' (tabela '+brl(c.tabela_total)+')'+(c.beneficio?' + '+c.beneficio:'')}
+    const x=a.antes||{},y=a.depois||{},N={matricula:'matrícula',nome:'nome',whatsapp_norm:'WhatsApp',venda_tipo:'tipo',venda_lote:'lote',venda_parcela:'parcela',venda_parcelas:'parcelas',venda_total:'total',venda_data:'data',venda_consultor:'consultor',responsavel_nome:'responsável'};
+    return Object.keys(N).filter(k=>JSON.stringify(x[k])!==JSON.stringify(y[k])).map(k=>N[k]+': '+(x[k]??'')+' → '+(y[k]??'')).join('; ')||'Condição especial'};
+  $('t-aj').innerHTML=ajustes.length?ajustes.map(a=>'<tr><td>'+dataHoraBR(a.created_at)+'</td><td><span class="tag'+(a.acao==='exclusao'?' ag':'')+'">'+(AC_N[a.acao]||a.acao)+'</span></td><td>'+esc(a.lead_nome||'')+'</td><td>'+esc(a.motivo||'')+'</td><td class="sub">'+esc(dif(a))+'</td><td>'+esc(a.feito_por||'')+'</td><td><b>'+esc(a.autorizado_por||'')+'</b></td></tr>').join(''):'<tr><td colspan="7" class="sub">Nenhum ajuste até agora.</td></tr>';
 }
 function maxEtapa(l){const ordem=['novo','boas_vindas','atendimento','agendado','compareceu','fechado'];let m=0;tentativasDe(l).forEach(x=>{const i=ordem.indexOf(x.etapa);if(i>m)m=i});return ordem[m]}
 async function salvarInv(){
