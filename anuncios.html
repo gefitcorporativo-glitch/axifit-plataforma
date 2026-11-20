@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Links dos anúncios · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<style>
+.pad{padding:18px 20px}
+.duas{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.cx{display:flex;gap:8px;align-items:stretch;margin:6px 0 14px}
+.cx code{flex:1;background:#F3F4F6;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:13px/1.45 ui-monospace,Consolas,monospace;word-break:break-all}
+.passos{margin:6px 0 0;padding-left:20px;font-size:14.5px}.passos li{margin:5px 0}
+.lb{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.ger{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.ger .campo{margin:0}
+.msg{white-space:pre-wrap;background:#F3F4F6;border-radius:10px;padding:12px 14px;font-size:14px;margin:6px 0 10px}
+#bloq{max-width:560px;margin:40px auto}
+</style>
+</head>
+<body>
+<main class="ax-main" id="conteudo" hidden>
+  <p class="info" style="margin-top:0">Área só do administrador. Serve para saber de qual campanha e de qual criativo veio cada lead dos anúncios.</p>
+  <div class="duas">
+    <div class="card pad">
+      <h2 class="sec" style="margin:0 0 4px">Jeito recomendado: parâmetros automáticos do Meta</h2>
+      <p class="info" style="margin:0 0 10px">Quem cuida do tráfego configura uma vez e o Meta preenche sozinho o nome da campanha e do anúncio. Não precisa de um link por criativo.</p>
+      <div class="lb">1. URL do site (destino do anúncio)</div>
+      <div class="cx"><code id="u-base"></code><button class="btn sm" onclick="copiar($('u-base').textContent,'URL copiada')">Copiar</button></div>
+      <div class="lb">2. Parâmetros de URL (campo "Parâmetros de URL" do anúncio)</div>
+      <div class="cx"><code id="u-par"></code><button class="btn sm" onclick="copiar($('u-par').textContent,'Parâmetros copiados')">Copiar</button></div>
+      <ol class="passos">
+        <li>No Gerenciador de Anúncios, no nível do <b>anúncio</b>, em Destino, cole a URL do site.</li>
+        <li>Em <b>Rastreamento</b>, no campo <b>Parâmetros de URL</b>, cole os parâmetros.</li>
+        <li>Dê nomes claros às campanhas e aos anúncios (ex.: "Lançamento Lote 1" e "Scooter vídeo 1"). São esses nomes que aparecem no Hub.</li>
+      </ol>
+      <div class="lb" style="margin-top:14px">Mensagem pronta para quem faz o tráfego</div>
+      <div class="msg" id="u-msg"></div>
+      <button class="btn" onclick="copiar($('u-msg').textContent,'Mensagem copiada')">Copiar mensagem</button>
+    </div>
+    <div class="card pad">
+      <h2 class="sec" style="margin:0 0 4px">Link por criativo (manual)</h2>
+      <p class="info" style="margin:0 0 10px">Para um anúncio específico, bio, story patrocinado ou parceiro. O nome que você digitar aparece no lead.</p>
+      <div class="ger">
+        <div class="campo"><label for="g-camp">Campanha</label><input id="g-camp" placeholder="Ex.: Lançamento Lote 1"></div>
+        <div class="campo"><label for="g-cri">Criativo</label><input id="g-cri" placeholder="Ex.: Scooter vídeo 1"></div>
+        <button class="btn pri" onclick="gerar()">Gerar link</button>
+      </div>
+      <div class="cx" id="g-res" hidden><code id="g-link"></code><button class="btn sm" onclick="copiar($('g-link').textContent,'Link copiado')">Copiar</button></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Resultado por campanha e criativo</h2>
+  <div class="card scroll"><table><thead><tr><th>Campanha</th><th>Criativo</th><th>Leads</th><th>Atendidos</th><th>Agendados</th><th>Anuais vendidos</th><th>Total vendido</th><th>Conversão</th></tr></thead><tbody id="t-res"></tbody></table></div>
+  <p class="info">Conta só leads que chegaram pelos anúncios (com marcação de origem). Leads de indicação e de balcão não entram.</p>
+</main>
+<div id="bloq" class="card pad" hidden><b>Área só do administrador.</b><p class="info">Entre com o acesso de administrador para ver os links dos anúncios.</p><a class="btn" href="index.html">Voltar ao início</a></div>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+const BASE=location.href.replace(/[^/]*$/,'')+'captura.html?c='+AXI.SLUG;
+const PAR='utm_source=meta&utm_medium=pago&utm_campaign={{campaign.name}}&utm_content={{ad.name}}';
+function copiar(t,m){navigator.clipboard.writeText(t).then(()=>toast(m||'Copiado'),()=>{prompt('Copie:',t)})}
+(async function(){
+  await axEntrar('anuncios.html');
+  axTopo('Links dos anúncios','Origem dos leads por campanha e criativo','anuncios.html');
+  if(AX_USER.papel!=='admin'){$('bloq').hidden=false;return}
+  $('conteudo').hidden=false;
+  $('u-base').textContent=BASE;$('u-par').textContent=PAR;
+  $('u-msg').textContent='Oi! Para os leads dos anúncios da AxiFit caírem certinho no Hub do lançamento, em cada anúncio:\n\n1. URL do site (destino): '+BASE+'\n\n2. Em Rastreamento, no campo "Parâmetros de URL", cole:\n'+PAR+'\n\nAssim o Hub mostra de qual campanha e de qual anúncio veio cada lead. Usem nomes claros nas campanhas e nos anúncios, porque são eles que aparecem para a gente. Valeu!';
+  let leads=[];try{leads=await axLeads()}catch(e){toast('Erro ao carregar os leads');return}
+  render(leads);
+})();
+function gerar(){
+  const c=$('g-camp').value.trim(),k=$('g-cri').value.trim();
+  if(!c||!k){toast('Preencha a campanha e o criativo');return}
+  const u=new URL(BASE);u.searchParams.set('utm_source','meta');u.searchParams.set('utm_medium','pago');u.searchParams.set('utm_campaign',c);u.searchParams.set('utm_content',k);
+  $('g-link').textContent=u.toString();$('g-res').hidden=false;
+}
+function render(leads){
+  const ads=leads.filter(l=>l.utm_source&&l.utm_source!=='equipe');
+  const g={};
+  ads.forEach(l=>{const k=(l.utm_campaign||'(sem campanha)')+'\u0001'+(l.utm_content||'(sem criativo)');(g[k]=g[k]||[]).push(l)});
+  const linhas=Object.entries(g).map(([k,ls])=>{const [c,cr]=k.split('\u0001');const v=ls.filter(l=>l.venda_anual);
+    return {c,cr,n:ls.length,at:ls.filter(l=>tentativasDe(l).some(x=>x.canal&&x.canal!=='nenhum')).length,ag:ls.filter(l=>tentativasDe(l).some(x=>x.resultado==='agendou'||x.etapa==='agendado')||l.agendamento_tipo).length,v:v.length,tot:v.reduce((a,l)=>a+Number(l.venda_total||0),0)}}).sort((a,b)=>b.v-a.v||b.n-a.n);
+  $('t-res').innerHTML=linhas.length?linhas.map(x=>'<tr><td>'+esc(x.c)+'</td><td><b>'+esc(x.cr)+'</b></td><td>'+x.n+'</td><td>'+x.at+'</td><td>'+x.ag+'</td><td><b>'+x.v+'</b></td><td>'+brl(x.tot,0)+'</td><td>'+(x.n?Math.round(x.v/x.n*100):0)+'%</td></tr>').join(''):'<tr><td colspan="8" class="sub">Nenhum lead de anúncio com marcação ainda.</td></tr>';
+}
+</script>
+</body>
+</html>

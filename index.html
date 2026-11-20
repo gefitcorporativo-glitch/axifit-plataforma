@@ -40,6 +40,10 @@ a.c.pri:hover{border-color:#B80500}
     <a class="c" href="painel.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div><div><b>Painel de Lançamento</b><span>Vendas, lotes, funil e resultado por consultor.</span></div></a>
   </div>
 
+  <div id="adm-cards" hidden><div class="grupo">Administrador</div><div class="cards">
+    <a class="c" href="anuncios.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8v18l-18-8z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div><div><b>Links dos anúncios</b><span>Link e parâmetros para o tráfego pago e resultado por criativo.</span></div></a>
+  </div></div>
+
   <div class="grupo">Ajuda e materiais</div>
   <div class="cards">
     <a class="c" href="novidades-20-11.jpg" target="_blank" style="border:2px solid var(--red)"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#E10600" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg></div><div><b>Novidades de 20/11</b><span>Condição especial, aluno sem WhatsApp próprio e como corrigir ou excluir uma venda.</span></div></a>
@@ -55,6 +59,7 @@ a.c.pri:hover{border-color:#B80500}
 (async function(){
   await axEntrar('index.html');
   axTopo('Hub do Lançamento','Nova AxiFit · novas instalações, sala de bike e nova metodologia','index.html');
+  if(AX_USER.papel==='admin')$('adm-cards').hidden=false;
   const h=new Date().getHours();
   $('ola').textContent=(h<12?'Bom dia':h<18?'Boa tarde':'Boa noite')+', '+(AX_USER.papel==='admin'?'Administrador':primeiroNome(AX_USER.nome))+'!';
 })();
