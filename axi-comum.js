@@ -100,6 +100,7 @@ function axTopo(titulo,sub,ativo){
   h.innerHTML='<div class="ax-in"><a href="index.html"><img src="axifit-logo-vermelho.png" alt="AxiFit"></a><div><h1>'+esc(titulo)+'</h1><p>'+esc(sub||'')+'</p></div><span class="ax-esp"></span><span class="ax-quem">'+esc(AX_USER.nome)+' · '+esc(PAPEL[AX_USER.papel]||'')+'</span><button class="ax-sair" onclick="axSair()">Sair</button></div>'+
     '<nav class="ax-nav">'+links.map(([u,n])=>'<a href="'+u+'"'+(u.endsWith('.pdf')?' target="_blank"':'')+(u===ativo?' class="on"':'')+'>'+n+'</a>').join('')+'</nav>';
   document.body.prepend(h);
+  {const t=document.querySelector('.ax-top');if(t&&!t.dataset.mini){t.dataset.mini=1;const f=()=>t.classList.toggle('mini',scrollY>40);addEventListener('scroll',f,{passive:true});f()}}
 }
 
 /* Tempo de resposta: minutos dentro do horário de funcionamento (padrão 8h às 21h, segunda a sábado) */
@@ -131,7 +132,8 @@ const tentativasDe=l=>Array.isArray(l.tentativas)?l.tentativas:[];
 :root{--bg:#F3F4F6;--card:#fff;--line:#E3E5E9;--ink:#14171C;--mut:#5B6370;--red:#E10600;--red2:#FFF5F4;--blue:#1D4ED8;--ok:#0F7A40}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
-.ax-top{background:#14171C;color:#fff}
+.ax-top{background:#14171C;color:#fff;position:sticky;top:0;z-index:15;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.ax-top .ax-in{transition:padding .15s}.ax-top.mini .ax-in{padding-top:8px;padding-bottom:6px}.ax-top.mini .ax-in p{display:none}.ax-top.mini .ax-in img{height:28px}.ax-top.mini .ax-in h1{font-size:17px}
 .ax-in{max-width:1400px;margin:0 auto;padding:16px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .ax-in img{height:38px;display:block}.ax-in h1{font:600 21px/1.2 'Space Grotesk',sans-serif;margin:0}.ax-in p{margin:2px 0 0;color:#B9BEC7;font-size:13px}
 .ax-esp{flex:1}.ax-quem{font-size:13px;color:#B9BEC7}

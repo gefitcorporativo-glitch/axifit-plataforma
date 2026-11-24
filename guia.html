@@ -9,17 +9,19 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#F3F4F6;color:#14171C;font:16px/1.55 Inter,system-ui,sans-serif}
-.top{background:#14171C;color:#fff}
+.top{background:#14171C;color:#fff;position:sticky;top:0;z-index:15;box-shadow:0 2px 10px rgba(0,0,0,.18)}.tin{transition:padding .15s}.top.mini .tin{padding-top:8px;padding-bottom:8px}.top.mini .tin p{display:none}.top.mini .tin img{height:30px}.top.mini .tin h1{font-size:19px}
+.volta{margin-left:auto;display:flex;gap:8px}.volta a{color:#fff;text-decoration:none;border:1px solid #3A404B;border-radius:8px;padding:7px 12px;font-size:13.5px;font-weight:600;white-space:nowrap}.volta a:hover{border-color:#fff}.volta a.pri{background:#E10600;border-color:#E10600}
 .tin{max-width:1100px;margin:0 auto;padding:22px 24px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
 .tin img{height:46px}
 .tin h1{font:700 26px/1.2 'Space Grotesk',sans-serif;margin:0}
 .tin p{margin:3px 0 0;color:#B9BEC7;font-size:14.5px}
-nav{position:sticky;top:0;z-index:5;background:#14171C;border-top:1px solid #2A2F37}
+nav{background:#14171C;border-top:1px solid #2A2F37}
+nav a.on{color:#fff;border-bottom-color:#E10600}
 nav .in{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto}
 nav a{color:#B9BEC7;text-decoration:none;font-size:14px;font-weight:500;padding:11px 12px;white-space:nowrap;border-bottom:3px solid transparent}
 nav a:hover{color:#fff;border-bottom-color:#E10600}
 main{max-width:1100px;margin:0 auto;padding:24px}
-section{margin-bottom:34px;scroll-margin-top:60px}
+section{margin-bottom:34px;scroll-margin-top:120px}
 h2{font:700 24px/1.2 'Space Grotesk',sans-serif;margin:0 0 6px}
 h2 small{display:block;font:500 13px Inter,sans-serif;color:#E10600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .lead{color:#3A404B;margin:0 0 16px;max-width:780px}
@@ -86,8 +88,8 @@ footer{max-width:1100px;margin:0 auto;padding:0 24px 30px;color:#5B6370;font-siz
 </style>
 </head>
 <body>
-<div class="top"><div class="tin"><img src="axifit-logo-vermelho.png" alt="AxiFit"><div><h1>Guia do lançamento</h1><p>Tudo o que a equipe comercial precisa saber para vender o anual da nova AxiFit</p></div></div>
-<nav><div class="in"><a href="#campanha">A campanha</a><a href="#reuniao" style="color:#fff">Reunião 17/11</a><a href="#valores">Valores e benefícios</a><a href="#venda">Passo a passo da venda</a><a href="#indicacao">Indicação e cupons</a><a href="#vale">Vale e não vale</a><a href="#falar">Como falar</a><a href="#links">Links</a></div></nav></div>
+<div class="top"><div class="tin"><img src="axifit-logo-vermelho.png" alt="AxiFit"><div><h1>Guia do lançamento</h1><p>Tudo o que a equipe comercial precisa saber para vender o anual da nova AxiFit</p></div><div class="volta"><a href="index.html" class="pri">Início do Hub</a><a href="cupons.html">Registrar venda</a></div></div>
+<nav><div class="in"><a href="#campanha">A campanha</a><a href="#reuniao">Reunião 17/11</a><a href="#valores">Valores e benefícios</a><a href="#venda">Passo a passo da venda</a><a href="#indicacao">Indicação e cupons</a><a href="#vale">Vale e não vale</a><a href="#falar">Como falar</a><a href="#links">Links</a></div></nav></div>
 <main>
 
 <section id="campanha">
@@ -293,5 +295,8 @@ footer{max-width:1100px;margin:0 auto;padding:0 24px 30px;color:#5B6370;font-siz
 </section>
 </main>
 <footer>Metodologia GeFit</footer>
+<script>(function(){let t=document.querySelector('.top');if(!t)return;const f=()=>t.classList.toggle('mini',scrollY>40);addEventListener('scroll',f,{passive:true});f()})()</script>
+<script>(function(){const as=[...document.querySelectorAll('nav a[href^="#"]')],ss=as.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const f=()=>{let atual=ss[0];ss.forEach(s=>{if(s.getBoundingClientRect().top<140)atual=s});as.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+atual.id))};addEventListener('scroll',f,{passive:true});f()})()</script>
 </body>
 </html>
