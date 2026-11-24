@@ -11,8 +11,21 @@
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .barra .esp{flex:1}
 .busca{padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:220px}
-.kan{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(236px,1fr);gap:10px;overflow-x:auto;padding-bottom:10px;align-items:start}
-.col{background:#E9EBEF;border-radius:14px;padding:8px;min-height:200px}
+.ax-main{max-width:none}
+.kpis{margin-bottom:10px}
+.mapa{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.mapa button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;gap:6px;align-items:center}
+.mapa button span{background:#14171C;color:#fff;border-radius:999px;padding:0 7px;font-size:12px}
+.mapa button:hover{border-color:var(--ink)}
+.mapa .seta{padding:5px 10px}
+.kwrap{position:relative}
+.kan{display:grid;grid-auto-flow:column;grid-auto-columns:var(--colw,270px);gap:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;align-items:stretch;height:var(--kh,70vh);scroll-behavior:smooth;scrollbar-width:auto;scrollbar-color:#9AA0A8 #E3E5E9}
+.kan::-webkit-scrollbar{height:14px}.kan::-webkit-scrollbar-track{background:#E3E5E9;border-radius:8px}.kan::-webkit-scrollbar-thumb{background:#9AA0A8;border-radius:8px;border:3px solid #E3E5E9}
+.kan.arr{cursor:grabbing;scroll-behavior:auto;user-select:none}
+.col{background:#E9EBEF;border-radius:14px;padding:0 8px 8px;display:flex;flex-direction:column;min-height:0}
+.col .lista{flex:1;overflow-y:auto;min-height:0;padding-right:2px}
+.col .colh{position:sticky;top:0;background:#E9EBEF;z-index:1;border-radius:14px 14px 0 0;padding-top:12px}
+.compacto .kc:not(.nv) .ln:nth-of-type(3){display:none}.compacto .kc{padding:7px 9px;margin-bottom:6px}.compacto .kc .nm{font-size:13.5px}
 .col.drop{outline:2px dashed var(--red);outline-offset:-2px}
 .colh{padding:6px 6px 8px}.colh b{font:600 15px 'Space Grotesk',sans-serif}.colh .q{float:right;font:700 14px 'Space Grotesk',sans-serif;color:var(--mut)}
 .colh .d{display:block;font-size:12px;color:var(--mut)}
@@ -41,7 +54,8 @@
     <span class="esp"></span>
     <span class="info">Clique no card para registrar a tentativa. Arraste para mudar de etapa.</span>
   </div>
-  <div class="kan" id="kan"></div>
+  <div class="mapa" id="mapa"></div>
+  <div class="kwrap"><div class="kan" id="kan"></div></div>
 </main>
 <footer class="ax-rod">Metodologia GeFit</footer>
 
@@ -144,8 +158,10 @@ function render(){
     let ls=fs.filter(l=>etapaDe(l)===e.id);
     ls.sort((a,b)=>e.id==='novo'?String(a.created_at).localeCompare(String(b.created_at)):String(a.proximo_contato||'9').localeCompare(String(b.proximo_contato||'9')));
     const lim=e.id==='fechado'||e.id==='perdido'?30:200,vis=ls.slice(0,lim);
-    return '<div class="col" data-e="'+e.id+'"><div class="colh"><b>'+e.n+'</b><span class="q">'+ls.length+'</span><span class="d">'+e.d+'</span></div>'+vis.map(cartao).join('')+(ls.length>lim?'<div class="mais">e mais '+(ls.length-lim)+'</div>':'')+'</div>';
+    return '<div class="col" data-e="'+e.id+'" id="col-'+e.id+'"><div class="colh"><b>'+e.n+'</b><span class="q">'+ls.length+'</span><span class="d">'+e.d+'</span></div><div class="lista">'+vis.map(cartao).join('')+(ls.length>lim?'<div class="mais">e mais '+(ls.length-lim)+'</div>':'')+'</div></div>';
   }).join('');
+  $('mapa').innerHTML='<button class="seta" onclick="rolar(-1)" title="Voltar colunas">◀</button>'+cols.map(e=>'<button onclick="irCol(\''+e.id+'\')">'+e.n+' <span>'+fs.filter(l=>etapaDe(l)===e.id).length+'</span></button>').join('')+'<button class="seta" onclick="rolar(1)" title="Avançar colunas">▶</button><label class="info" style="display:flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="f-comp" '+(compacto?'checked':'')+' onchange="setCompacto(this.checked)"> Modo compacto (ver mais colunas)</label>';
+  aplicarCompacto();ajustarAltura();
   document.querySelectorAll('.kc').forEach(c=>{c.draggable=true;c.addEventListener('dragstart',ev=>{arrastando=c.dataset.id;ev.dataTransfer.effectAllowed='move'});c.addEventListener('click',ev=>{if(ev.target.closest('button,a'))return;abrirLead(c.dataset.id)})});
   document.querySelectorAll('.col').forEach(col=>{
     col.addEventListener('dragover',ev=>{ev.preventDefault();col.classList.add('drop')});
@@ -153,6 +169,17 @@ function render(){
     col.addEventListener('drop',ev=>{ev.preventDefault();col.classList.remove('drop');if(!arrastando)return;const l=leads.find(x=>x.id===arrastando);arrastando=null;if(l&&etapaDe(l)!==col.dataset.e)abrirLead(l.id,col.dataset.e)});
   });
 }
+let compacto=false;try{compacto=localStorage.getItem('axi_compacto')==='1'}catch(e){}
+function setCompacto(v){compacto=v;try{localStorage.setItem('axi_compacto',v?'1':'0')}catch(e){}aplicarCompacto()}
+function aplicarCompacto(){const k=$('kan');k.classList.toggle('compacto',compacto);k.style.setProperty('--colw',compacto?'215px':'270px')}
+function irCol(id){const c=$('col-'+id),k=$('kan');if(c)k.scrollLeft=c.offsetLeft-k.offsetLeft-4}
+function rolar(d){const k=$('kan');k.scrollLeft+=d*(k.clientWidth*0.8)}
+function ajustarAltura(){const k=$('kan'),t=document.querySelector('.ax-top');const hTop=t?Math.min(t.offsetHeight,96):90;k.style.setProperty('--kh',Math.max(360,innerHeight-hTop-60)+'px')}
+addEventListener('resize',ajustarAltura);
+// arrastar o quadro para os lados clicando no fundo
+(function(){let x0=0,s0=0,on=false;document.addEventListener('mousedown',ev=>{const k=$('kan');if(!k||!ev.target.closest('#kan')||ev.target.closest('.kc,button,input,select,a'))return;on=true;x0=ev.pageX;s0=k.scrollLeft;k.classList.add('arr')});
+document.addEventListener('mousemove',ev=>{if(!on)return;$('kan').scrollLeft=s0-(ev.pageX-x0)});
+document.addEventListener('mouseup',()=>{if(!on)return;on=false;$('kan').classList.remove('arr')})})();
 function cartao(l){
   const e=etapaDe(l),sp=situacaoProx(l),t=tentativasDe(l);
   let linha2='<span class="tag">'+esc(ORIGEM[l.origem]||l.origem||'Cadastro')+'</span>';
@@ -163,7 +190,7 @@ function cartao(l){
   if(e==='novo'){linha3='Chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))}
   else{linha3=(l.consultora_id?esc(l.consultora_id):'Sem consultor')+(t.length?' · '+t.length+' tentativa'+(t.length>1?'s':''):'')+(l.proximo_contato&&!['fechado','perdido'].includes(e)?' · próximo '+dataHoraBR(l.proximo_contato):'')}
   const acao=e==='novo'&&!l.consultora_id?'<div class="ac"><button class="btn sm" onclick="assumir(\''+l.id+'\')">Assumir</button></div>':'';
-  return '<div class="kc '+(['fechado','perdido'].includes(e)?'':sp)+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
+  return '<div class="kc '+(['fechado','perdido'].includes(e)?'':sp)+(e==='novo'?' nv':'')+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
 }
 async function assumir(id){
   const l=leads.find(x=>x.id===id);if(!l)return;
