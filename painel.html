@@ -27,21 +27,50 @@
 .dias .d i{display:block;width:100%;background:#14171C;border-radius:4px 4px 0 0;min-height:2px}
 .dias .d.h i{background:var(--red)}.dias .d b{font-size:11.5px;color:var(--ink)}
 .pad{padding:14px 16px}
+.tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:6px}
+.tl .card{padding:14px 16px}.tl .n{font:700 28px/1.05 'Space Grotesk',sans-serif}.tl .l{font-size:13px;color:var(--mut);margin-top:4px}
+.tl .card.hot{border:2px solid var(--red)}
+.up{color:#0F7A40;font-weight:700}.down{color:#B42318;font-weight:700}
+.vd{display:flex;gap:3px;align-items:flex-end;height:170px;padding-top:16px;position:relative}
+.vd .d{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10.5px;color:var(--mut);position:relative}
+.vd .d i{display:block;width:100%;background:var(--red);border-radius:4px 4px 0 0;min-height:2px}
+.vd .d b{font-size:11px;color:var(--ink)}
+.vd svg{position:absolute;inset:16px 0 16px 0;width:100%;height:calc(100% - 32px);pointer-events:none}
+.lotes td,.lotes th{white-space:nowrap}
+.st{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.st.at{background:#E8F5EE;color:#0F7A40}.st.en{background:#EEF0F3;color:#5B616B}.st.fu{background:#F3F4F6;color:#9AA0A8}
+.acoes-lote{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.invl{display:grid;grid-template-columns:150px 1fr 140px auto;gap:10px;align-items:end}
+.invl .campo{margin:0}
+.encerrado{background:#14171C;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px}
 </style>
 </head>
 <body>
 <main class="ax-main">
+  <div class="encerrado" id="ciclo-fim" hidden></div>
+  <h2 class="sec" style="margin-top:0">Linha do tempo do lançamento</h2>
+  <div class="tl" id="tl"></div>
+  <div class="card pad">
+    <div class="scroll"><table class="lotes"><thead><tr><th>Lote</th><th>Situação</th><th>Início</th><th>Fim</th><th>Dias</th><th>Anuais novos</th><th>Renovações</th><th>Total vendido</th><th>Anuais por dia</th><th>Vendido por dia</th></tr></thead><tbody id="t-lotes"></tbody></table></div>
+    <div class="acoes-lote" id="acoes-lote" hidden></div>
+  </div>
+  <h2 class="sec">Vendas por dia</h2>
+  <div class="card pad"><div class="vd" id="vd"></div><div class="info" style="margin-top:8px">Barras: anuais vendidos no dia. Linha: total acumulado.</div></div>
+
+  <h2 class="sec">Resumo</h2>
   <div class="kpis" id="kpis"></div>
 
   <h2 class="sec" style="margin-top:6px">Retorno do lançamento</h2>
   <div class="roi" id="roi"></div>
   <div class="card pad" id="inv-c" hidden>
-    <div class="inv">
-      <div class="campo"><label for="i-trafego">Tráfego pago (R$)</label><input id="i-trafego" inputmode="decimal"></div>
-      <div class="campo"><label for="i-mkt">Equipe de marketing (R$)</label><input id="i-mkt" inputmode="decimal"></div>
-      <div class="campo"><label for="i-outros">Outros gastos (R$)</label><input id="i-outros" inputmode="decimal"></div>
-      <button class="btn pri" onclick="salvarInv()">Salvar investimento</button>
+    <b>Lançar investimento</b> <span class="sub">· por data, conforme os valores forem chegando (ex.: tráfego da semana)</span>
+    <div class="invl" style="margin-top:8px">
+      <div class="campo"><label for="i-data">Data</label><input id="i-data" type="date"></div>
+      <div class="campo"><label for="i-tipo">Tipo</label><select id="i-tipo"><option value="trafego">Tráfego pago</option><option value="mkt">Equipe de marketing</option><option value="outros">Outros gastos</option></select></div>
+      <div class="campo"><label for="i-valor">Valor (R$)</label><input id="i-valor" inputmode="decimal"></div>
+      <button class="btn pri" onclick="addInv()">Adicionar</button>
     </div>
+    <div class="scroll" style="margin-top:10px"><table><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Lançado por</th><th></th></tr></thead><tbody id="t-inv"></tbody></table></div>
     <p class="info" style="margin:8px 0 0">ROI do lançamento: total vendido em contratos dividido por todo o investimento. ROI do tráfego: vendas de quem chegou pelos anúncios dividido pelo tráfego pago. Vendas da base de alunos não entram no ROI do tráfego.</p>
   </div>
 
@@ -68,7 +97,7 @@ let leads=[],cupons=[],ajustes=null;
   axTopo('Painel de Lançamento','Nova AxiFit · novas instalações, sala de bike e nova metodologia','painel.html');
   $('inv-c').hidden=!ehGestor();
   try{[leads,cupons]=await Promise.all([axLeads(),axCupons()])}catch(e){toast('Erro ao carregar');return}
-  const inv=AX_CAMP.investimento||{};['trafego','mkt','outros'].forEach(k=>{$('i-'+k).value=inv[k]?String(inv[k]).replace('.',','):''});
+  $('i-data').value=hoje();
   if(['admin','direcao'].includes(AX_USER.papel)){
     $('adm').hidden=false;
     try{ajustes=(await axApi(AXI.P+'venda_ajustes?academia_id=eq.'+AXI.AC+'&select=*&order=created_at.desc&limit=500'))||[]}catch(e){ajustes=null}
@@ -93,7 +122,8 @@ function render(){
     [leads.filter(l=>l.indicado_por_codigo).length,'leads vindos de indicação']
   ].map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
   // ROI
-  const inv=AX_CAMP.investimento||{},invT=Number(inv.trafego||0),invTot=invT+Number(inv.mkt||0)+Number(inv.outros||0);
+  const ents=invEntradas(),invT=ents.filter(e=>e.tipo==='trafego').reduce((a,e)=>a+e.valor,0),invTot=ents.reduce((a,e)=>a+e.valor,0);
+  renderTempo(vend,total,invTot);renderInv(ents);
   const vendT=vend.filter(l=>!daBase(l)&&doTrafego(l)).reduce((a,l)=>a+Number(l.venda_total||0),0);
   const card=(t,roi,saldo,leg)=>'<div class="card"><div class="t">'+t+'</div>'+(roi===null?'<div class="big">sem investimento<small></small></div><div class="l">Informe o investimento abaixo para calcular.</div>':'<div class="big">'+Math.floor(roi)+'<small>de ROI</small></div><div class="l">Saldo: <b style="color:'+(saldo>=0?'#0F7A40':'#B42318')+'">'+brl(saldo,0)+'</b> · '+leg+'</div>')+'</div>';
   $('roi').innerHTML=card('ROI do lançamento',invTot>0?total/invTot:null,total-invTot,brl(total,0)+' vendidos para '+brl(invTot,0)+' investidos')+card('ROI do tráfego pago',invT>0?vendT/invT:null,vendT-invT,brl(vendT,0)+' vendidos de leads dos anúncios para '+brl(invT,0)+' em tráfego');
@@ -135,11 +165,117 @@ function renderAdm(){
   $('t-aj').innerHTML=ajustes.length?ajustes.map(a=>'<tr><td>'+dataHoraBR(a.created_at)+'</td><td><span class="tag'+(a.acao==='exclusao'?' ag':'')+'">'+(AC_N[a.acao]||a.acao)+'</span></td><td>'+esc(a.lead_nome||'')+'</td><td>'+esc(a.motivo||'')+'</td><td class="sub">'+esc(dif(a))+'</td><td>'+esc(a.feito_por||'')+'</td><td><b>'+esc(a.autorizado_por||'')+'</b></td></tr>').join(''):'<tr><td colspan="7" class="sub">Nenhum ajuste até agora.</td></tr>';
 }
 function maxEtapa(l){const ordem=['novo','boas_vindas','atendimento','agendado','compareceu','fechado'];let m=0;tentativasDe(l).forEach(x=>{const i=ordem.indexOf(x.etapa);if(i>m)m=i});return ordem[m]}
-async function salvarInv(){
-  const v=k=>{const n=num($('i-'+k).value);return n>0?Math.round(n*100)/100:0};
-  const inv={trafego:v('trafego'),mkt:v('mkt'),outros:v('outros'),atualizado_em:new Date().toISOString(),por:AX_USER.nome};
-  try{await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({investimento:inv})});AX_CAMP.investimento=inv;render();toast('Investimento salvo')}
-  catch(e){toast('Não foi possível salvar. Rode o SQL do painel.')}
+const TIPO_INV={trafego:'Tráfego pago',mkt:'Equipe de marketing',outros:'Outros gastos'};
+const ORDEM_LOTES=['lote1','lote2','inauguracao'];
+function addDias(d,n){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return iso(x)}
+function difDias(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5)}
+// investimento: lista por data; valores antigos (únicos) entram com a data do início
+function invEntradas(){
+  const inv=AX_CAMP.investimento||{},ini=cicloInfo().inicio||hoje();
+  const l=(inv.lancamentos||[]).map(e=>({...e,valor:Number(e.valor)||0}));
+  if(!inv.lancamentos)['trafego','mkt','outros'].forEach(k=>{if(Number(inv[k])>0)l.push({id:'antigo-'+k,data:ini,tipo:k,valor:Number(inv[k]),por:inv.por||''})});
+  return l.sort((a,b)=>String(a.data).localeCompare(String(b.data)));
+}
+async function salvarInvLista(lista){
+  const inv={lancamentos:lista,atualizado_em:new Date().toISOString(),por:AX_USER.nome};
+  await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({investimento:inv})});
+  AX_CAMP.investimento=inv;render();
+}
+async function addInv(){
+  const d=$('i-data').value,t=$('i-tipo').value,v=num($('i-valor').value);
+  if(!d||!(v>0)){toast('Informe a data e o valor');return}
+  const l=invEntradas();l.push({id:Date.now().toString(36),data:d,tipo:t,valor:Math.round(v*100)/100,por:AX_USER.nome});
+  try{await salvarInvLista(l);$('i-valor').value='';toast('Investimento lançado')}catch(e){toast('Não foi possível salvar')}
+}
+async function delInv(id){
+  if(!confirm('Apagar este lançamento de investimento?'))return;
+  try{await salvarInvLista(invEntradas().filter(e=>e.id!==id));toast('Apagado')}catch(e){toast('Não foi possível apagar')}
+}
+function renderInv(ents){
+  $('t-inv').innerHTML=ents.length?ents.map(e=>'<tr><td>'+dataBR(e.data)+'</td><td>'+TIPO_INV[e.tipo]+'</td><td><b>'+brl(e.valor)+'</b></td><td>'+esc(e.por||'')+'</td><td><button class="btn sm" onclick="delInv(\''+e.id+'\')">Apagar</button></td></tr>').join('')+'<tr><td colspan="2"><b>Total investido</b></td><td colspan="3"><b>'+brl(ents.reduce((a,e)=>a+e.valor,0))+'</b></td></tr>':'<tr><td colspan="5" class="sub">Nenhum investimento lançado.</td></tr>';
+}
+// ciclo do lançamento: lotes com início e fim
+function cicloInfo(){
+  const c=AX_CAMP.ciclo||{};
+  const datas=leads.filter(l=>l.venda_anual&&l.venda_data).map(l=>String(l.venda_data).slice(0,10)).sort();
+  const inicio=c.inicio||datas[0]||null;
+  const lotes={};(c.lotes||[]).forEach(x=>lotes[x.lote]=x);
+  const atual=AX_CAMP.lote_atual||'lote1';
+  // monta a sequência: lotes encerrados, o atual em andamento e os futuros
+  let ini=inicio;const seq=ORDEM_LOTES.map(k=>{
+    const x=lotes[k]||{};let st;
+    if(x.fim)st='encerrado';else if(k===atual&&!c.encerrado)st='andamento';else if(ORDEM_LOTES.indexOf(k)<ORDEM_LOTES.indexOf(atual))st='encerrado';else st='futuro';
+    const li=x.inicio||(st!=='futuro'?ini:null),lf=x.fim||null;
+    if(lf)ini=lf;
+    return {lote:k,status:st,inicio:li,fim:lf};
+  });
+  return {inicio,seq,encerrado:!!c.encerrado,fim:c.fim||null,c};
+}
+function renderTempo(vend,total,invTot){
+  const ci=cicloInfo(),fimRef=ci.encerrado&&ci.fim?ci.fim:hoje();
+  const vc=vend.filter(l=>!ci.fim||String(l.venda_data||'').slice(0,10)<=ci.fim);
+  const tot=vc.reduce((a,l)=>a+Number(l.venda_total||0),0);
+  const dias=ci.inicio?difDias(ci.inicio,fimRef)+1:0;
+  const atual=ci.seq.find(x=>x.status==='andamento');
+  const dLote=atual&&atual.inicio?difDias(atual.inicio,fimRef)+1:null;
+  const d7=addDias(fimRef,-6),v7=vc.filter(l=>String(l.venda_data||'').slice(0,10)>=d7);
+  const media=dias?vc.length/dias:0,media7=v7.length/Math.min(7,dias||7);
+  const ritmo=media?Math.round((media7/media-1)*100):0;
+  const card=(n,l,h)=>'<div class="card'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>';
+  $('tl').innerHTML=ci.inicio?[
+    card('Dia '+dias,'do lançamento · início em '+dataBR(ci.inicio)+(ci.encerrado?' · encerrado em '+dataBR(ci.fim):''),1),
+    card(atual?LOTE_N[atual.lote]:'Ciclo encerrado',atual?'dia '+dLote+' do lote · desde '+dataBR(atual.inicio):'lotes fechados'),
+    card(media.toFixed(1).replace('.',','),'anuais vendidos por dia ('+vc.length+' em '+dias+' dias)'),
+    card(brl(dias?tot/dias:0,0),'vendido por dia'),
+    card((media7).toFixed(1).replace('.',','),'anuais por dia nos últimos 7 dias · <span class="'+(ritmo>=0?'up':'down')+'">'+(ritmo>=0?'+':'')+ritmo+'%</span> sobre a média'),
+    card(invTot>0?Math.floor(tot/invTot):'sem investimento',invTot>0?'de ROI acumulado · investido '+brl(invTot,0)+' ('+brl(invTot/dias,0)+' por dia)':'lance o investimento abaixo')
+  ].join(''):'<div class="card"><div class="l">O lançamento começa a contar na primeira venda registrada.</div></div>';
+  // tabela de lotes
+  $('t-lotes').innerHTML=ci.seq.map(x=>{
+    const v=vend.filter(l=>l.venda_lote===x.lote),t=v.reduce((a,l)=>a+Number(l.venda_total||0),0);
+    const fimD=x.fim||(x.status==='andamento'?fimRef:null),d=x.inicio&&fimD?difDias(x.inicio,fimD)+1:0;
+    const st={andamento:'<span class="st at">Em andamento</span>',encerrado:'<span class="st en">Encerrado</span>',futuro:'<span class="st fu">Não aberto</span>'}[x.status];
+    return '<tr><td><b>'+LOTE_N[x.lote]+'</b></td><td>'+st+'</td><td>'+(x.inicio?dataBR(x.inicio):'')+'</td><td>'+(x.fim?dataBR(x.fim):'')+'</td><td>'+(d||'')+'</td><td>'+v.filter(l=>l.venda_tipo==='novo').length+'</td><td>'+v.filter(daBase).length+'</td><td><b>'+brl(t,0)+'</b></td><td>'+(d?(v.length/d).toFixed(1).replace('.',','):'')+'</td><td>'+(d?brl(t/d,0):'')+'</td></tr>';
+  }).join('')+'<tr><td colspan="4"><b>Ciclo do lançamento</b></td><td><b>'+dias+'</b></td><td><b>'+vc.filter(l=>l.venda_tipo==='novo').length+'</b></td><td><b>'+vc.filter(daBase).length+'</b></td><td><b>'+brl(tot,0)+'</b></td><td><b>'+media.toFixed(1).replace('.',',')+'</b></td><td><b>'+brl(dias?tot/dias:0,0)+'</b></td></tr>';
+  // ações (gestor)
+  const prox=atual?ORDEM_LOTES[ORDEM_LOTES.indexOf(atual.lote)+1]:null;
+  $('acoes-lote').hidden=!ehGestor()||ci.encerrado||!ci.inicio;
+  $('acoes-lote').innerHTML=(atual&&prox?'<button class="btn pri" onclick="encerrarLote()">Encerrar '+LOTE_N[atual.lote]+' e abrir '+LOTE_N[prox]+'</button>':'')+(atual?'<button class="btn" onclick="finalizarCiclo()">Finalizar ciclo de lançamento</button>':'');
+  $('ciclo-fim').hidden=!ci.encerrado;
+  if(ci.encerrado)$('ciclo-fim').innerHTML='<b>Ciclo de lançamento encerrado em '+dataBR(ci.fim)+'.</b> '+dias+' dias, '+vc.length+' anuais e '+brl(tot,0)+' vendidos. Vendas registradas depois dessa data não entram nos números do ciclo.';
+  // gráfico por dia
+  if(!ci.inicio){$('vd').innerHTML='';return}
+  const ds=[];for(let i=0;i<dias&&i<120;i++)ds.push(addDias(ci.inicio,i));
+  const cont=ds.map(d=>vc.filter(l=>String(l.venda_data||'').slice(0,10)===d).length),mx=Math.max(1,...cont);
+  let ac=0;const acum=cont.map(c=>ac+=c),mxa=Math.max(1,ac);
+  const pts=acum.map((a,i)=>((i+.5)/ds.length*100).toFixed(2)+','+(100-a/mxa*100).toFixed(2)).join(' ');
+  $('vd').innerHTML=ds.map((d,i)=>'<div class="d'+(d===hoje()?' h':'')+'"><b>'+(cont[i]||'')+'</b><i style="height:'+Math.round(cont[i]/mx*100)+'%"></i>'+d.slice(8)+'/'+d.slice(5,7)+'</div>').join('')+'<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="#14171C" stroke-width="1.2" vector-effect="non-scaling-stroke" style="stroke-width:2.5px"/></svg>';
+}
+async function salvarCiclo(ciclo,extra){
+  await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({ciclo,...(extra||{})})});
+  AX_CAMP.ciclo=ciclo;Object.assign(AX_CAMP,extra||{});render();
+}
+async function encerrarLote(){
+  const ci=cicloInfo(),atual=ci.seq.find(x=>x.status==='andamento');if(!atual)return;
+  const prox=ORDEM_LOTES[ORDEM_LOTES.indexOf(atual.lote)+1];if(!prox)return;
+  const d=prompt('Encerrar o '+LOTE_N[atual.lote]+' e abrir o '+LOTE_N[prox]+'.\n\nData do encerramento (dd/mm/aaaa):',dataBR(hoje()));if(!d)return;
+  const m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m){toast('Data inválida');return}
+  const fim=m[3]+'-'+m[2]+'-'+m[1];
+  if(atual.inicio&&fim<atual.inicio){toast('A data é anterior ao início do lote');return}
+  const c={...(ci.c||{}),inicio:ci.inicio,lotes:[...((ci.c||{}).lotes||[]).filter(x=>x.lote!==atual.lote&&x.lote!==prox),{lote:atual.lote,inicio:atual.inicio,fim,encerrado_por:AX_USER.nome,encerrado_em:new Date().toISOString()},{lote:prox,inicio:fim}]};
+  try{await salvarCiclo(c,{lote_atual:prox});toast(LOTE_N[atual.lote]+' encerrado. '+LOTE_N[prox]+' aberto: os valores novos já valem no registro de venda.')}
+  catch(e){toast('Não foi possível salvar. Rode o SQL do ciclo.')}
+}
+async function finalizarCiclo(){
+  const ci=cicloInfo(),atual=ci.seq.find(x=>x.status==='andamento');
+  const d=prompt('Finalizar o ciclo de lançamento. O lote em andamento será encerrado e os números do ciclo ficam fechados.\n\nData do encerramento (dd/mm/aaaa):',dataBR(hoje()));if(!d)return;
+  const m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m){toast('Data inválida');return}
+  const fim=m[3]+'-'+m[2]+'-'+m[1];
+  if(!confirm('Confirma finalizar o ciclo de lançamento em '+d+'?'))return;
+  const lotes=((ci.c||{}).lotes||[]).filter(x=>!atual||x.lote!==atual.lote);
+  if(atual)lotes.push({lote:atual.lote,inicio:atual.inicio,fim,encerrado_por:AX_USER.nome,encerrado_em:new Date().toISOString()});
+  try{await salvarCiclo({...(ci.c||{}),inicio:ci.inicio,lotes,encerrado:true,fim,encerrado_por:AX_USER.nome});toast('Ciclo de lançamento finalizado')}
+  catch(e){toast('Não foi possível salvar. Rode o SQL do ciclo.')}
 }
 </script>
 </body>

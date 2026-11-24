@@ -203,3 +203,6 @@ create table if not exists axifit_venda_ajustes (
   created_at timestamptz default now()
 );
 alter table axifit_venda_ajustes disable row level security;
+
+-- 12) Ciclo do lançamento: início, encerramento de cada lote e fim do ciclo (24/11/2026)
+alter table axifit_lead_campanhas add column if not exists ciclo jsonb default '{}'::jsonb;
