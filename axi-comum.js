@@ -94,7 +94,7 @@ function axRegras(){return (AX_CAMP&&AX_CAMP.regras&&typeof AX_CAMP.regras==='ob
 
 /* Menu do topo, igual em todas as telas internas */
 function axTopo(titulo,sub,ativo){
-  const links=[['index.html','Início'],['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
+  const links=[['index.html','Início'],['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['scripts.html','Scripts'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
   if(AX_USER&&AX_USER.papel==='admin')links.push(['anuncios.html','Anúncios']);
   const h=document.createElement('div');h.className='ax-top';
   h.innerHTML='<div class="ax-in"><a href="index.html"><img src="axifit-logo-vermelho.png" alt="AxiFit"></a><div><h1>'+esc(titulo)+'</h1><p>'+esc(sub||'')+'</p></div><span class="ax-esp"></span><span class="ax-quem">'+esc(AX_USER.nome)+' · '+esc(PAPEL[AX_USER.papel]||'')+'</span><button class="ax-sair" onclick="axSair()">Sair</button></div>'+
@@ -173,7 +173,8 @@ table{border-collapse:collapse;width:100%;font-size:14px}th{text-align:left;font
 .campo.inv input,.campo.inv select,.campo.inv .chips{outline:2px solid var(--red);outline-offset:1px;border-radius:9px}
 .lin{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chips label{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;cursor:pointer;display:flex;gap:6px;align-items:center}
-.chips input{accent-color:var(--red)}.chips label:has(input:checked){border-color:var(--red);background:var(--red2)}
+[hidden]{display:none!important}
+.chips input{accent-color:var(--red);width:auto!important;margin:0;flex:none}.chips label{white-space:nowrap}.chips label:has(input:checked){border-color:var(--red);background:var(--red2)}
 .erro{color:#B42318;font-size:13px;margin-top:6px}.aviso{background:var(--red2);border:1px solid #F5C2BE;border-radius:12px;padding:10px 14px;font-size:14px}
 .tag{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;white-space:nowrap;background:#F3F4F6;color:var(--mut)}
 .tag.ind{background:#EEF2FB;color:var(--blue)}.tag.ag{background:#FFF7E6;color:#9A5B00}.tag.ok{background:#E8F5EE;color:var(--ok)}

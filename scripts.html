@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Scripts do lançamento · AxiFit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="axi-comum.js"></script>
+<script src="scripts-lancamento.js"></script>
+<style>
+.ax-main{max-width:1100px}
+.cfg{display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.cfg .campo{margin:0;min-width:220px}
+.regras{background:#14171C;color:#fff;border-radius:14px;padding:14px 18px;margin-bottom:18px;font-size:14px}
+.regras b{color:#FF6B63}
+.regras ul{margin:6px 0 0;padding-left:18px}.regras li{margin:3px 0}
+.grp{font:600 13px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin:22px 0 8px}
+.sc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.sc h3{margin:0;font:600 17px 'Space Grotesk',sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sc .q{color:var(--mut);font-size:13.5px;margin:3px 0 10px}
+.sc .txt{white-space:pre-wrap;background:#F7F8FA;border-left:4px solid var(--red);border-radius:8px;padding:12px 14px;font-size:15px;line-height:1.55}
+.sc .txt.au{border-left-color:#1D4ED8}.sc .txt.ro{border-left-color:#14171C}
+.sc .ac{display:flex;gap:8px;margin-top:10px}
+.tg{font:700 11.5px Inter;border-radius:999px;padding:2px 9px;background:#F3F4F6;color:#5B616B;text-transform:uppercase;letter-spacing:.04em}
+.tg.au{background:#E8EEFC;color:#1D4ED8}
+</style>
+</head>
+<body>
+<main class="ax-main">
+  <div class="regras"><b>Regras do lançamento:</b>
+    <ul><li>Nunca mande preço por mensagem, áudio ou print. Preço é na ligação ou na visita.</li>
+    <li>Nunca diga "incluso": é cortesia, presente, bônus. Nunca diga a data em que o lote acaba.</li>
+    <li>Uma mensagem busca só o próximo pequeno "sim". O objetivo é a ligação e a visita marcada.</li>
+    <li>Confirmação de visita é sempre afirmação, nunca pergunta.</li></ul></div>
+  <div class="cfg">
+    <div class="campo"><label for="c-nome">Nome do lead (opcional)</label><input id="c-nome" placeholder="Ex.: Mariana" oninput="render()"></div>
+    <div class="campo"><label for="c-eu">Seu nome na mensagem</label><input id="c-eu" oninput="render()"></div>
+    <div class="campo"><label for="c-ind">Quem indicou (para indicados)</label><input id="c-ind" placeholder="Ex.: Bruno" oninput="render()"></div>
+    <span class="info" id="c-lote"></span>
+  </div>
+  <div id="lista"></div>
+</main>
+<footer class="ax-rod">Metodologia GeFit</footer>
+<script>
+(async function(){
+  await axEntrar('scripts.html');
+  axTopo('Scripts do lançamento','Mensagens prontas da primeira conversa até a visita marcada','scripts.html');
+  $('c-eu').value=AX_USER.papel==='admin'?'':primeiroNome(AX_USER.nome);
+  render();
+})();
+function ctx(){return {nome:primeiroNome($('c-nome').value)||'',eu:$('c-eu').value.trim(),indicador:primeiroNome($('c-ind').value)||'',lote:AX_CAMP.lote_atual||'lote1'}}
+function render(){
+  const c=ctx();$('c-lote').textContent='Textos ajustados para o '+(LOTE_FRASE[c.lote]||LOTE_FRASE.lote1).curto+'.';
+  let h='',g='';
+  SCRIPTS.forEach((s,i)=>{
+    if(s.grupo!==g){g=s.grupo;h+='<div class="grp">'+esc(g)+'</div>'}
+    const t=scriptTexto(s,c);
+    h+='<div class="sc"><h3>'+esc(s.titulo)+(s.tipo==='audio'?' <span class="tg au">Áudio</span>':s.tipo==='roteiro'?' <span class="tg">Roteiro</span>':'')+'</h3><div class="q">'+esc(s.quando)+'</div><div class="txt'+(s.tipo==='audio'?' au':s.tipo==='roteiro'?' ro':'')+'">'+esc(t)+'</div>'+(s.tipo==='roteiro'?'':'<div class="ac"><button class="btn sm pri" onclick="copiarS('+i+')">Copiar</button></div>')+'</div>';
+  });
+  $('lista').innerHTML=h;
+}
+function copiarS(i){navigator.clipboard.writeText(scriptTexto(SCRIPTS[i],ctx())).then(()=>toast('Mensagem copiada'),()=>toast('Não foi possível copiar'))}
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@
 <title>Central de Leads · AxiFit</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="axi-comum.js"></script>
+<script src="scripts-lancamento.js"></script>
 <style>
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .barra .esp{flex:1}
@@ -40,6 +41,7 @@
 .hist div{font-size:13.5px;margin:5px 0}.hist b{font-weight:600}
 .dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;font-size:13.5px;background:#F7F8FA;border-radius:10px;padding:10px 12px;margin-bottom:12px}
 .dados span{color:var(--mut);display:block;font-size:12px}
+.scr{border:1px solid #F4B4AE;background:#FFF8F7;border-radius:12px;padding:10px 12px;margin-bottom:12px}.scr summary{cursor:pointer;font-weight:700;font-size:14px}.scr .it{margin-top:10px}.scr .it b{font-size:13.5px}.scr .it p{white-space:pre-wrap;font-size:13.5px;margin:4px 0 6px;background:#fff;border-radius:8px;padding:8px 10px;border:1px solid var(--line)}.scr .it .bb{display:flex;gap:6px;flex-wrap:wrap}
 .rod{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
 </style>
 </head>
@@ -62,6 +64,7 @@
 <div class="fundo" id="m-lead"><div class="modal">
   <div class="mhead"><h2 id="l-tit">Lead</h2><button class="x" onclick="fechar()" aria-label="Fechar">×</button></div>
   <div class="dados" id="l-dados"></div>
+  <details class="scr" id="l-scr" open></details>
   <div class="campo" data-c="canal"><span class="lb">Como foi o contato</span><div class="chips">
     <label><input type="radio" name="canal" value="ligacao"> Ligação</label>
     <label><input type="radio" name="canal" value="mensagem"> Mensagem</label>
@@ -199,11 +202,20 @@ async function assumir(id){
 }
 function localDT(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)}
 function sugestaoProx(){const d=new Date();d.setDate(d.getDate()+2);if(d.getDay()===0)d.setDate(d.getDate()+1);d.setHours(10,0,0,0);return localDT(d)}
+let scrAtuais=[];
+function renderScripts(l){
+  const e=etapaDe(l),ls=scriptsDoLead(l,e),c={nome:primeiroNome(l.nome),eu:AX_USER.papel==='admin'?'':primeiroNome(AX_USER.nome),indicador:primeiroNome(l.indicado_por_nome||''),lote:AX_CAMP.lote_atual||'lote1'};
+  scrAtuais=ls.map(s=>({s,t:scriptTexto(s,c)}));
+  $('l-scr').hidden=!ls.length;
+  $('l-scr').innerHTML='<summary>Mensagem da etapa ('+ls.length+') · <a href="scripts.html" target="_blank" style="font-weight:500">ver todos os scripts</a></summary>'+scrAtuais.map((x,i)=>'<div class="it"><b>'+esc(x.s.titulo)+(x.s.tipo==='audio'?' (áudio, grave com suas palavras)':'')+'</b><p>'+esc(x.t)+'</p><div class="bb"><button class="btn sm" onclick="copiarScr('+i+')">Copiar</button>'+(x.s.tipo==='texto'&&l.whatsapp_norm?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+wpp(l.whatsapp_norm)+'?text='+encodeURIComponent(x.t)+'">Abrir no WhatsApp com o texto</a>':'')+'</div></div>').join('');
+}
+function copiarScr(i){navigator.clipboard.writeText(scrAtuais[i].t).then(()=>toast('Mensagem copiada'),()=>toast('Não foi possível copiar'))}
 function abrirLead(id,alvo){
   const l=leads.find(x=>x.id===id);if(!l)return;atual=l;etapaAlvo=alvo||null;
   $('l-tit').textContent=l.nome;$('l-erro').textContent='';document.querySelectorAll('#m-lead .campo').forEach(c=>c.classList.remove('inv'));
   const r=l.respostas||{};
   $('l-dados').innerHTML=[['WhatsApp',l.whatsapp||'sem número'],['Origem',ORIGEM[l.origem]||l.origem||''],l.utm_content||l.utm_campaign?['Anúncio',(l.utm_campaign||'')+(l.utm_content?' · '+l.utm_content:'')]:null,['Chegou',dataHoraBR(l.created_at)],['Consultor',l.consultora_id||'ninguém ainda'],l.indicado_por_codigo?['Indicado por',(l.indicado_por_nome||'')+' ('+l.indicado_por_codigo+')']:null,l.idade?['Idade',l.idade]:null,l.treina?['Treina hoje',{nao_treina:'Não treina',treina:'Treina'}[l.treina]||l.treina]:null,l.tempo_parado?['Parado há',{menos_3m:'menos de 3 meses','3a12m':'3 a 12 meses',mais_1a:'mais de 1 ano'}[l.tempo_parado]||l.tempo_parado]:null,l.utm_content?['Trazido por',l.utm_content]:null].filter(Boolean).map(([a,b])=>'<div><span>'+esc(a)+'</span>'+esc(b)+'</div>').join('');
+  renderScripts(l);
   document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.checked=false);
   $('l-etapa').value=alvo||etapaDe(l);$('l-obs').value='';
   $('l-prox').value=l.proximo_contato&&new Date(l.proximo_contato)>new Date()?localDT(l.proximo_contato):'';
