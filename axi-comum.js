@@ -94,7 +94,7 @@ function axRegras(){return (AX_CAMP&&AX_CAMP.regras&&typeof AX_CAMP.regras==='ob
 
 /* Menu do topo, igual em todas as telas internas */
 function axTopo(titulo,sub,ativo){
-  const links=[['index.html','Início'],['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['scripts.html','Scripts'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
+  const links=[['index.html','Início'],['painel.html','Painel de Lançamento'],['leads.html','Central de Leads'],['dia.html','Missões e Lançar dia'],['scripts.html','Scripts'],['cupons.html','Sorteio e indicações'],['guia.html','Guia'],['atas.html','Atas'],['documentos.html','Documentos e ajuda'],['imprimir.html','Imprimir cupons']];
   if(AX_USER&&AX_USER.papel==='admin')links.push(['anuncios.html','Anúncios']);
   const h=document.createElement('div');h.className='ax-top';
   h.innerHTML='<div class="ax-in"><a href="index.html"><img src="axifit-logo-vermelho.png" alt="AxiFit"></a><div><h1>'+esc(titulo)+'</h1><p>'+esc(sub||'')+'</p></div><span class="ax-esp"></span><span class="ax-quem">'+esc(AX_USER.nome)+' · '+esc(PAPEL[AX_USER.papel]||'')+'</span><button class="ax-sair" onclick="axSair()">Sair</button></div>'+
