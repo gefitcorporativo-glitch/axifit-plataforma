@@ -145,6 +145,9 @@ function etapaDe(l){
 const etapaFim=e=>['fechado','perdido','ganho'].includes(e);
 function etapaNome(l){const fo=funilObj(funilDe(l));return ((fo.etapas.find(e=>e.id===etapaDe(l))||{}).n)||''}
 const noKanban=l=>funilDe(l)==='leads';
+/* contatos de antes do início do acompanhamento: leads parados, sem tentativa, sem venda e sem indicação */
+function acompInicio(){return (AX_CAMP&&AX_CAMP.regras&&AX_CAMP.regras.acomp_inicio)||null}
+function antigo(l){const ini=acompInicio();if(!ini)return false;return funilDe(l)==='leads'&&String(l.created_at||'')<ini&&!l.indicado_por_codigo&&!tentativasDe(l).length&&!l.venda_anual&&l.venda_tipo!=='outro'}
 const tentativasDe=l=>Array.isArray(l.tentativas)?l.tentativas:[];
 
 /* estilo comum */

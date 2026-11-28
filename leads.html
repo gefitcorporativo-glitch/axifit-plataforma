@@ -64,6 +64,8 @@
     <input class="busca" id="busca" placeholder="Buscar nome ou WhatsApp" oninput="render()">
     <select class="busca" id="f-cons" style="min-width:170px" onchange="render()"></select>
     <label class="info" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-perd" onchange="render()"> Mostrar perdidos</label>
+    <label class="info" id="f-ant-c" style="display:flex;gap:6px;align-items:center" hidden><input type="checkbox" id="f-ant" onchange="filtrarFunil();render()"> <span id="f-ant-t">Mostrar contatos antigos</span></label>
+    <button class="btn sm so-g" id="b-zerar" hidden onclick="zerarTarefas()">Começar o acompanhamento do zero</button>
     <span class="esp"></span>
     <span class="info">Clique no card para registrar a tentativa. Arraste para mudar de etapa.</span>
   </div>
@@ -163,7 +165,8 @@ const RES_ETAPA={sem_resposta:null,respondeu:'atendimento',agendou:'agendado',co
   const m=location.hash.match(/lead=([\w-]+)/);if(m){const l=todos.find(x=>x.id===m[1]);if(l&&funilDe(l)&&funilDe(l)!==FUN)trocarFunil(funilDe(l));abrirLead(m[1])}
 })();
 let todos=[];
-async function carregar(){try{todos=await axLeads();leads=todos.filter(l=>funilDe(l)===FUN)}catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,80));return}render()}
+function filtrarFunil(){const ver=$('f-ant')&&$('f-ant').checked;leads=todos.filter(l=>funilDe(l)===FUN&&(ver||!antigo(l)))}
+async function carregar(){try{todos=await axLeads();filtrarFunil()}catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,80));return}render()}
 function filtrados(){
   const q=norm($('busca').value),qd=q.replace(/\D/g,''),c=$('f-cons').value;
   return leads.filter(l=>{
@@ -182,8 +185,9 @@ function situacaoProx(l){
 function render(){
   const fs=filtrados(),mostraPerd=$('f-perd').checked,fo=funilObj(FUN);
   const cols=fo.etapas.filter(e=>e.id!=='perdido'||mostraPerd);
-  $('funis').innerHTML=axFunis().map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))).length+'</span></button>').join('');
+  $('funis').innerHTML=axFunis().map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))&&!antigo(l)).length+'</span></button>').join('');
   $('b-novo').hidden=FUN!=='leads';
+  {const ini=acompInicio(),n=todos.filter(antigo).length;$('f-ant-c').hidden=!(ini&&n&&FUN==='leads');$('f-ant-t').textContent='Mostrar '+n+' contato(s) de antes de '+(ini?dataBR(ini):'');$('b-zerar').hidden=!ehGestor()||FUN!=='leads'}
   // indicadores do topo
   const fila=leads.filter(l=>etapaDe(l)===fo.ini),atrasos=leads.filter(l=>situacaoProx(l)==='atraso'&&!etapaFim(etapaDe(l)));
   const resp=leads.filter(l=>l.primeira_tentativa_em).map(l=>minutosUteis(l.created_at,l.primeira_tentativa_em));
@@ -218,7 +222,15 @@ addEventListener('resize',ajustarAltura);
 (function(){let x0=0,s0=0,on=false;document.addEventListener('mousedown',ev=>{const k=$('kan');if(!k||!ev.target.closest('#kan')||ev.target.closest('.kc,button,input,select,a'))return;on=true;x0=ev.pageX;s0=k.scrollLeft;k.classList.add('arr')});
 document.addEventListener('mousemove',ev=>{if(!on)return;$('kan').scrollLeft=s0-(ev.pageX-x0)});
 document.addEventListener('mouseup',()=>{if(!on)return;on=false;$('kan').classList.remove('arr')})})();
-function trocarFunil(id){FUN=id;try{localStorage.setItem('axi_funil',id)}catch(e){}leads=todos.filter(l=>funilDe(l)===FUN);$('kan').scrollLeft=0;render()}
+function trocarFunil(id){FUN=id;try{localStorage.setItem('axi_funil',id)}catch(e){}filtrarFunil();$('kan').scrollLeft=0;render()}
+async function zerarTarefas(){
+  const agora=new Date().toISOString();
+  const n=todos.filter(l=>funilDe(l)==='leads'&&String(l.created_at||'')<agora&&!l.indicado_por_codigo&&!tentativasDe(l).length&&!l.venda_anual&&l.venda_tipo!=='outro').length;
+  if(!confirm('Começar o acompanhamento do zero a partir de agora?\n\n'+n+' contato(s) antigo(s), sem nenhuma tentativa registrada, saem da Central e das Missões. Nada é apagado: dá para ver de novo marcando "Mostrar contatos antigos".\n\nFicam: indicados pelo link, quem já tem tentativa registrada, vendas e os funis de listas.'))return;
+  const regras=Object.assign({},AX_CAMP.regras||{},{acomp_inicio:agora,acomp_por:AX_USER.nome});
+  try{await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({regras})});AX_CAMP.regras=regras;filtrarFunil();render();toast('Pronto: o acompanhamento começa agora.')}
+  catch(e){toast('Não foi possível salvar.')}
+}
 async function salvarFunis(lista){await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({funis:lista})});AX_CAMP.funis=lista}
 async function novoFunil(){
   const nome=(prompt('Nome do novo funil (ex.: Ex-alunos 2026, Mensais para upgrade):')||'').trim();if(!nome)return;

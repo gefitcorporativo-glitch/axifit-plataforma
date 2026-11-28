@@ -138,7 +138,7 @@ function atualizar(){
   historico(c);
 }
 function missoes(c,dia){
-  const ativos=leads.filter(l=>funilDe(l)&&!etapaFim(etapaDe(l)));
+  const ativos=leads.filter(l=>funilDe(l)&&!etapaFim(etapaDe(l))&&!antigo(l));
   const fila=ativos.filter(l=>etapaDe(l)===funilObj(funilDe(l)).ini&&!l.primeira_tentativa_em&&(funilDe(l)==='leads'?(!l.consultora_id||doCons(l,c)):doCons(l,c)));
   const meus=ativos.filter(l=>doCons(l,c)&&l.proximo_contato);
   const hojeL=meus.filter(l=>iso(l.proximo_contato)===dia);
