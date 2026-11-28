@@ -138,16 +138,16 @@ function atualizar(){
   historico(c);
 }
 function missoes(c,dia){
-  const ativos=leads.filter(noKanban).filter(l=>!['fechado','perdido'].includes(etapaDe(l)));
-  const fila=ativos.filter(l=>etapaDe(l)==='novo'&&!l.primeira_tentativa_em&&(!l.consultora_id||doCons(l,c)));
+  const ativos=leads.filter(l=>funilDe(l)&&!etapaFim(etapaDe(l)));
+  const fila=ativos.filter(l=>etapaDe(l)===funilObj(funilDe(l)).ini&&!l.primeira_tentativa_em&&(funilDe(l)==='leads'?(!l.consultora_id||doCons(l,c)):doCons(l,c)));
   const meus=ativos.filter(l=>doCons(l,c)&&l.proximo_contato);
   const hojeL=meus.filter(l=>iso(l.proximo_contato)===dia);
   const atras=meus.filter(l=>iso(l.proximo_contato)<dia);
   const agenda=leads.filter(l=>l.agendamento_em&&iso(l.agendamento_em)===dia&&(c==='__todos'||l.consultora_id===c)).sort((a,b)=>String(a.agendamento_em).localeCompare(String(b.agendamento_em)));
-  const item=(l,extra)=>'<div class="it"><span><span class="nm">'+esc(l.nome)+'</span><br><span class="sub">'+esc((ETAPAS.find(e=>e.id===etapaDe(l))||{}).n||'')+(extra?' · '+extra:'')+'</span></span><span class="esp"></span>'+(l.whatsapp_norm?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+wpp(l.whatsapp_norm)+'">WhatsApp</a>':'')+'<a class="btn sm" href="leads.html#lead='+l.id+'">Abrir</a></div>';
+  const item=(l,extra)=>'<div class="it"><span><span class="nm">'+esc(l.nome)+'</span><br><span class="sub">'+esc((funilDe(l)!=='leads'?funilObj(funilDe(l)).nome+' · ':'')+etapaNome(l))+(extra?' · '+extra:'')+'</span></span><span class="esp"></span>'+(l.whatsapp_norm?'<a class="btn sm wa" target="_blank" rel="noopener" href="'+wpp(l.whatsapp_norm)+'">WhatsApp</a>':'')+'<a class="btn sm" href="leads.html#lead='+l.id+'">Abrir</a></div>';
   const bloco=(cls,tit,ls,vazio,fn)=>'<div class="bloco '+cls+'"><h3>'+tit+'<span class="q">'+ls.length+'</span></h3>'+(ls.length?ls.slice(0,40).map(fn).join('')+(ls.length>40?'<div class="sub">e mais '+(ls.length-40)+'</div>':''):'<div class="vazio">'+vazio+'</div>')+'</div>';
   $('missoes').innerHTML=
-    bloco('red','Primeiras tentativas pendentes',fila,'Fila zerada. Nenhum lead novo esperando.',l=>item(l,'chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))))+
+    bloco('red','Primeiras tentativas pendentes',fila,'Fila zerada. Nenhum lead novo esperando.',l=>item(l,funilDe(l)==='leads'?'chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at)):((l.respostas||{}).plano_fim?'vence '+dataBR(l.respostas.plano_fim):'da lista')))+
     bloco('red','Contatos atrasados',atras,'Nenhum contato atrasado.',l=>item(l,'era para '+dataHoraBR(l.proximo_contato)))+
     bloco('amb','Contatos marcados para hoje',hojeL,'Nenhum contato marcado para hoje.',l=>item(l,horaBR(l.proximo_contato)))+
     bloco('blu','Agendamentos de hoje',agenda,'Nenhum agendamento hoje.',l=>item(l,(AGENDA[l.agendamento_tipo]||'Agendamento')+' às '+horaBR(l.agendamento_em)));

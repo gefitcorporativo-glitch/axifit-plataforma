@@ -8,7 +8,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="axi-comum.js"></script>
 <script src="scripts-lancamento.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+.funis{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.funis .fb{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font:600 15px 'Space Grotesk',Inter,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center}
+.funis .fb span{background:#EEF0F3;border-radius:999px;padding:0 8px;font:700 12px Inter}
+.funis .fb.on{background:#14171C;color:#fff;border-color:#14171C}.funis .fb.on span{background:#E10600;color:#fff}
+.imp-dist{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;margin-top:8px}
+.imp-dist input{width:100%}
+.imp-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .barra .esp{flex:1}
 .busca{padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:220px}
@@ -47,9 +55,12 @@
 </head>
 <body>
 <main class="ax-main">
+  <div class="funis" id="funis"></div>
   <div class="kpis" id="kpis"></div>
   <div class="barra">
-    <button class="btn pri" onclick="abrirNovo()">Novo lead</button>
+    <button class="btn pri" id="b-novo" onclick="abrirNovo()">Novo lead</button>
+    <button class="btn so-g" id="b-imp" onclick="abrirImp()" hidden>Importar lista do SCA</button>
+    <button class="btn so-g" id="b-funil" onclick="novoFunil()" hidden>Novo funil</button>
     <input class="busca" id="busca" placeholder="Buscar nome ou WhatsApp" oninput="render()">
     <select class="busca" id="f-cons" style="min-width:170px" onchange="render()"></select>
     <label class="info" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-perd" onchange="render()"> Mostrar perdidos</label>
@@ -76,13 +87,13 @@
     <label><input type="radio" name="res" value="sem_resposta"> Sem resposta</label>
     <label><input type="radio" name="res" value="respondeu"> Respondeu</label>
     <label><input type="radio" name="res" value="agendou"> Agendou</label>
-    <label><input type="radio" name="res" value="compareceu"> Compareceu</label>
+    <label id="r-comp"><input type="radio" name="res" value="compareceu"> Compareceu</label>
     <label><input type="radio" name="res" value="fechou_anual"> Fechou o anual</label>
     <label><input type="radio" name="res" value="fechou_mensal"> Fechou mensal ou outro plano</label>
     <label><input type="radio" name="res" value="perdido"> Perdido</label>
   </div></div>
   <div class="lin" id="l-ag" hidden>
-    <div class="campo"><label for="l-agt">Tipo de agendamento</label><select id="l-agt"><option value="visita">Visita</option><option value="consultoria">Consultoria</option><option value="experiencia">Experiência</option></select></div>
+    <div class="campo"><label for="l-agt">Tipo de agendamento</label><select id="l-agt"><option value="visita">Visita</option><option value="consultoria">Consultoria</option><option value="experiencia">Experiência</option><option value="matricula">Matrícula</option></select></div>
     <div class="campo" data-c="agd"><label for="l-agd">Dia e hora</label><input type="datetime-local" id="l-agd"></div>
   </div>
   <div class="lin" id="l-men" hidden>
@@ -115,9 +126,27 @@
   <div class="rod"><button class="btn pri" onclick="criarLead()">Criar lead</button></div>
 </div></div>
 
+<div class="fundo" id="m-imp"><div class="modal" style="max-width:760px">
+  <div class="mhead"><h2>Importar lista para um funil</h2><button class="x" onclick="$('m-imp').classList.remove('on')" aria-label="Fechar">×</button></div>
+  <div class="lin">
+    <div class="campo"><label for="i-funil">Funil de destino</label><select id="i-funil"></select></div>
+    <div class="campo"><label for="i-de">Vencimento de (opcional)</label><input type="date" id="i-de" onchange="prevImp()"></div>
+    <div class="campo"><label for="i-ate">até (opcional)</label><input type="date" id="i-ate" onchange="prevImp()"></div>
+  </div>
+  <div class="campo"><label>Origem dos alunos</label>
+    <div class="chips"><label><input type="radio" name="i-fonte" value="arquivo" checked onchange="fonteImp()"> Planilha nova do SCA (xlsx ou csv)</label><label><input type="radio" name="i-fonte" value="base" onchange="fonteImp()"> Alunos já importados no Hub (pelo vencimento)</label></div></div>
+  <div class="campo" id="i-arq-c"><input type="file" id="i-arq" accept=".xls,.xlsx,.csv,.html,.htm"></div>
+  <div id="i-map" hidden><div class="info" style="margin-bottom:6px">Confira as colunas da planilha:</div><div class="imp-cols" id="i-cols"></div></div>
+  <div class="info" id="i-prev" style="margin:10px 0;font-weight:600"></div>
+  <div id="i-dist-c" hidden><b>Divisão entre os consultores</b> <span class="info">· quem já vem com consultor na planilha fica com ele. Os que sobrarem ficam sem consultor e cada um assume.</span><div class="imp-dist" id="i-dist"></div></div>
+  <div class="erro" id="i-erro"></div>
+  <div class="rod"><span style="flex:1"></span><button class="btn" onclick="$('m-imp').classList.remove('on')">Cancelar</button><button class="btn pri" id="i-ok" onclick="importar()" disabled>Importar</button></div>
+</div></div>
+
 <script>
+let FUN='leads';try{FUN=localStorage.getItem('axi_funil')||'leads'}catch(e){}
 let leads=[],atual=null,etapaAlvo=null,arrastando=null;
-const ORIGEM={trafego_pago:'Anúncio',indicacao_digital:'Indicação',indicacao:'Indicação',whatsapp:'WhatsApp',instagram:'Instagram',balcao:'Balcão',outro:'Outro'};
+const ORIGEM={base_sca:'Aluno (SCA)',trafego_pago:'Anúncio',indicacao_digital:'Indicação',indicacao:'Indicação',whatsapp:'WhatsApp',instagram:'Instagram',balcao:'Balcão',outro:'Outro'};
 const CANAL={ligacao:'Ligação',mensagem:'Mensagem',ligacao_mensagem:'Ligação e mensagem',presencial:'Presencial',nenhum:'Mudança de etapa'};
 const RES={sem_resposta:'Sem resposta',respondeu:'Respondeu',agendou:'Agendou',compareceu:'Compareceu',fechou_anual:'Fechou o anual',fechou_mensal:'Fechou mensal ou outro plano',perdido:'Perdido'};
 const RES_ETAPA={sem_resposta:null,respondeu:'atendimento',agendou:'agendado',compareceu:'compareceu',fechou_anual:'fechado',fechou_mensal:'fechado',perdido:'perdido'};
@@ -127,12 +156,14 @@ const RES_ETAPA={sem_resposta:null,respondeu:'atendimento',agendou:'agendado',co
   axTopo('Central de Leads','Lançamento da nova AxiFit · do cadastro ao fechamento','leads.html');
   $('f-cons').innerHTML='<option value="">Todos os consultores</option><option value="__fila">Só a fila sem consultor</option><option value="__meus">Só os meus</option>'+axEquipe().map(n=>'<option>'+esc(n)+'</option>').join('');
   if(!ehGestor())$('f-cons').value='';
-  $('l-etapa').innerHTML=ETAPAS.map(e=>'<option value="'+e.id+'">'+e.n+'</option>').join('');
+  document.querySelectorAll('.so-g').forEach(b=>b.hidden=!ehGestor());
+  if(!axFunis().some(f=>f.id===FUN))FUN='leads';
   await carregar();
   setInterval(()=>{if(!document.querySelector('.fundo.on'))render()},30000);
-  const m=location.hash.match(/lead=([\w-]+)/);if(m)abrirLead(m[1]);
+  const m=location.hash.match(/lead=([\w-]+)/);if(m){const l=todos.find(x=>x.id===m[1]);if(l&&funilDe(l)&&funilDe(l)!==FUN)trocarFunil(funilDe(l));abrirLead(m[1])}
 })();
-async function carregar(){try{leads=(await axLeads()).filter(noKanban)}catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,80));return}render()}
+let todos=[];
+async function carregar(){try{todos=await axLeads();leads=todos.filter(l=>funilDe(l)===FUN)}catch(e){toast('Erro ao carregar: '+String(e.message).slice(0,80));return}render()}
 function filtrados(){
   const q=norm($('busca').value),qd=q.replace(/\D/g,''),c=$('f-cons').value;
   return leads.filter(l=>{
@@ -149,18 +180,22 @@ function situacaoProx(l){
   return d<h?'atraso':d===h?'hoje':'';
 }
 function render(){
-  const fs=filtrados(),mostraPerd=$('f-perd').checked;
-  const cols=ETAPAS.filter(e=>e.id!=='perdido'||mostraPerd);
+  const fs=filtrados(),mostraPerd=$('f-perd').checked,fo=funilObj(FUN);
+  const cols=fo.etapas.filter(e=>e.id!=='perdido'||mostraPerd);
+  $('funis').innerHTML=axFunis().map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))).length+'</span></button>').join('');
+  $('b-novo').hidden=FUN!=='leads';
   // indicadores do topo
-  const fila=leads.filter(l=>etapaDe(l)==='novo'),atrasos=leads.filter(l=>situacaoProx(l)==='atraso'&&!['fechado','perdido'].includes(etapaDe(l)));
+  const fila=leads.filter(l=>etapaDe(l)===fo.ini),atrasos=leads.filter(l=>situacaoProx(l)==='atraso'&&!etapaFim(etapaDe(l)));
   const resp=leads.filter(l=>l.primeira_tentativa_em).map(l=>minutosUteis(l.created_at,l.primeira_tentativa_em));
   const media=resp.length?Math.round(resp.reduce((a,b)=>a+b,0)/resp.length):0;
   const hojeN=leads.filter(l=>iso(l.created_at)===hoje()).length;
-  $('kpis').innerHTML=[[fila.length,'na fila de novos leads',fila.length>0],[hojeN,'leads chegaram hoje'],[leads.filter(l=>situacaoProx(l)==='hoje').length,'contatos marcados para hoje'],[atrasos.length,'contatos atrasados',atrasos.length>0],[resp.length?media+' min':'sem dados','tempo médio de resposta (ideal até 5 min)']].map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+  if(fo.lista){const ag=leads.filter(l=>etapaDe(l)==='agendado').length,gn=leads.filter(l=>etapaDe(l)===fo.ganho).length;
+    $('kpis').innerHTML=[[leads.length,'na lista'],[fila.length,'ainda sem contato',fila.length>0],[leads.filter(l=>situacaoProx(l)==='hoje').length,'contatos marcados para hoje'],[atrasos.length,'contatos atrasados',atrasos.length>0],[ag,'matrículas agendadas'],[gn,FUN==='renovacao'?'renovaram no lançamento':'convertidos']].map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('')}
+  else $('kpis').innerHTML=[[fila.length,'na fila de novos leads',fila.length>0],[hojeN,'leads chegaram hoje'],[leads.filter(l=>situacaoProx(l)==='hoje').length,'contatos marcados para hoje'],[atrasos.length,'contatos atrasados',atrasos.length>0],[resp.length?media+' min':'sem dados','tempo médio de resposta (ideal até 5 min)']].map(([n,l,h])=>'<div class="kpi'+(h?' hot':'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
   $('kan').innerHTML=cols.map(e=>{
     let ls=fs.filter(l=>etapaDe(l)===e.id);
     ls.sort((a,b)=>e.id==='novo'?String(a.created_at).localeCompare(String(b.created_at)):String(a.proximo_contato||'9').localeCompare(String(b.proximo_contato||'9')));
-    const lim=e.id==='fechado'||e.id==='perdido'?30:200,vis=ls.slice(0,lim);
+    const lim=etapaFim(e.id)?60:300,vis=ls.slice(0,lim);
     return '<div class="col" data-e="'+e.id+'" id="col-'+e.id+'"><div class="colh"><b>'+e.n+'</b><span class="q">'+ls.length+'</span><span class="d">'+e.d+'</span></div><div class="lista">'+vis.map(cartao).join('')+(ls.length>lim?'<div class="mais">e mais '+(ls.length-lim)+'</div>':'')+'</div></div>';
   }).join('');
   $('mapa').innerHTML='<button class="seta" onclick="rolar(-1)" title="Voltar colunas">◀</button>'+cols.map(e=>'<button onclick="irCol(\''+e.id+'\')">'+e.n+' <span>'+fs.filter(l=>etapaDe(l)===e.id).length+'</span></button>').join('')+'<button class="seta" onclick="rolar(1)" title="Avançar colunas">▶</button><label class="info" style="display:flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="f-comp" '+(compacto?'checked':'')+' onchange="setCompacto(this.checked)"> Modo compacto (ver mais colunas)</label>';
@@ -183,17 +218,122 @@ addEventListener('resize',ajustarAltura);
 (function(){let x0=0,s0=0,on=false;document.addEventListener('mousedown',ev=>{const k=$('kan');if(!k||!ev.target.closest('#kan')||ev.target.closest('.kc,button,input,select,a'))return;on=true;x0=ev.pageX;s0=k.scrollLeft;k.classList.add('arr')});
 document.addEventListener('mousemove',ev=>{if(!on)return;$('kan').scrollLeft=s0-(ev.pageX-x0)});
 document.addEventListener('mouseup',()=>{if(!on)return;on=false;$('kan').classList.remove('arr')})})();
+function trocarFunil(id){FUN=id;try{localStorage.setItem('axi_funil',id)}catch(e){}leads=todos.filter(l=>funilDe(l)===FUN);$('kan').scrollLeft=0;render()}
+async function salvarFunis(lista){await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({funis:lista})});AX_CAMP.funis=lista}
+async function novoFunil(){
+  const nome=(prompt('Nome do novo funil (ex.: Ex-alunos 2026, Mensais para upgrade):')||'').trim();if(!nome)return;
+  const id='f'+Date.now().toString(36);
+  try{await salvarFunis(((AX_CAMP.funis)||[]).concat([{id,nome,criado_por:AX_USER.nome,criado_em:new Date().toISOString()}]));toast('Funil criado. Agora importe a lista.');trocarFunil(id);abrirImp()}
+  catch(e){toast('Não foi possível criar. Rode o SQL dos funis.')}
+}
+/* ---------- importar lista do SCA para um funil ---------- */
+let imp={rows:[],head:[],map:{}};
+const ICAMPOS={mat:'Matrícula',nome:'Nome',tel:'Telefone / WhatsApp',plano:'Plano',fim:'Vencimento do plano',cons:'Consultor'};
+const IPISTAS={mat:/^(c[oó]d|matr|cadastro|n[uú]mero|id\b)/i,nome:/nome/i,tel:/(fone|celular|whats|telefone|contato)/i,plano:/^plano|periodic/i,fim:/(fim|t[eé]rmino|vencimento|validade|final)/i,cons:/(consult|respons|vendedor)/i};
+function abrirImp(){
+  imp={rows:[],head:[],map:{}};$('i-arq').value='';$('i-map').hidden=true;$('i-erro').textContent='';$('i-prev').textContent='';$('i-dist-c').hidden=true;$('i-ok').disabled=true;
+  $('i-funil').innerHTML=axFunis().filter(f=>f.lista).map(f=>'<option value="'+f.id+'"'+(f.id===FUN?' selected':'')+'>'+esc(f.nome)+'</option>').join('');
+  if(FUN==='renovacao'){const d=new Date(),y=d.getFullYear(),m=d.getMonth();$('i-de').value=iso(new Date(y,m,1,12));$('i-ate').value=iso(new Date(y,m+2,0,12))}else{$('i-de').value='';$('i-ate').value=''}
+  document.querySelector('input[name=i-fonte][value=arquivo]').checked=true;fonteImp();$('m-imp').classList.add('on');
+}
+function fonteImp(){const b=document.querySelector('input[name=i-fonte]:checked').value==='base';$('i-arq-c').hidden=b;$('i-map').hidden=b||!imp.head.length;prevImp()}
+$('i-arq').addEventListener('change',async ev=>{
+  const f=ev.target.files[0];if(!f)return;$('i-erro').textContent='';
+  if(!window.XLSX){$('i-erro').textContent='O leitor de planilhas não carregou. Recarregue a página.';return}
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,raw:true}),ws=wb.Sheets[wb.SheetNames[0]];
+    const m=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''}),hi=m.findIndex(r=>r.some(c=>/nome/i.test(String(c))));
+    if(hi<0){$('i-erro').textContent='Não encontrei a linha de títulos (com a coluna Nome).';return}
+    imp.head=m[hi].map(c=>String(c).trim());imp.rows=m.slice(hi+1).filter(r=>r.some(c=>String(c).trim()!==''));imp.map={};
+    Object.keys(ICAMPOS).forEach(k=>{imp.map[k]=imp.head.findIndex((h,j)=>IPISTAS[k].test(h)&&!Object.values(imp.map).includes(j))});
+    if(imp.map.nome>=0&&imp.map.mat===imp.map.nome)imp.map.mat=-1;
+    $('i-cols').innerHTML=Object.keys(ICAMPOS).map(k=>'<div class="campo"><label>'+ICAMPOS[k]+'</label><select data-k="'+k+'" onchange="imp.map[this.dataset.k]=+this.value;prevImp()"><option value="-1">(não tem)</option>'+imp.head.map((h,i)=>'<option value="'+i+'"'+(imp.map[k]===i?' selected':'')+'>'+esc(h||('Coluna '+(i+1)))+'</option>').join('')+'</select></div>').join('');
+    $('i-map').hidden=false;prevImp();
+  }catch(err){$('i-erro').textContent='Não consegui ler a planilha: '+String(err.message||err).slice(0,120)}
+});
+function cel(r,k){const i=imp.map[k];return i>=0?r[i]:''}
+function dISO(v){
+  if(v instanceof Date&&!isNaN(v))return new Date(v.getTime()-v.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  if(typeof v==='number'&&v>20000&&v<80000)return new Date(Date.UTC(1899,11,30)+v*864e5).toISOString().slice(0,10);
+  const s=String(v||'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')}
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null;
+}
+function tNorm(v){let d=String(v||'').replace(/\D/g,'');if(d.length>=12&&d.startsWith('55'))d=d.slice(2);return d.length===10||d.length===11?d:''}
+function tFmt(d){return d?'('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4):''}
+function tNome(n){return String(n||'').trim().replace(/\s+/g,' ').toLowerCase().replace(/(^|\s)(\S)/g,(a,b,c)=>b+c.toUpperCase()).replace(/\s(Da|De|Do|Das|Dos|E)\s/g,m=>m.toLowerCase())}
+function noPeriodo(fim){const de=$('i-de').value,ate=$('i-ate').value;if(!de&&!ate)return true;if(!fim)return false;return (!de||fim>=de)&&(!ate||fim<=ate)}
+function linhasImp(){
+  const base=document.querySelector('input[name=i-fonte]:checked').value==='base',eq=axEquipe(),out=[];
+  if(base){
+    todos.filter(l=>(l.origem==='base_sca'||l.venda_tipo==='ja_anual')&&!l.venda_anual&&noPeriodo((l.respostas||{}).plano_fim)).forEach(l=>out.push({existe:l,nome:l.nome,cons:l.consultora_id||''}));
+    return out;
+  }
+  const visto=new Set();
+  for(const r of imp.rows){
+    const nome=tNome(cel(r,'nome'));if(nome.length<3)continue;
+    const mat=String(cel(r,'mat')).trim().replace(/\.0$/,''),tel=tNorm(cel(r,'tel')),fim=dISO(cel(r,'fim'));
+    if(!noPeriodo(fim))continue;
+    const chave=mat||tel+'|'+nome;if(visto.has(chave))continue;visto.add(chave);
+    let cons=String(cel(r,'cons')).trim();const ce=eq.find(n=>norm(n)===norm(cons)||norm(primeiroNome(n))===norm(primeiroNome(cons)));cons=ce||'';
+    const existe=(mat&&todos.find(l=>String(l.matricula||'').toUpperCase()===mat.toUpperCase()))||(tel&&todos.find(l=>l.whatsapp_norm==='55'+tel&&norm(primeiroNome(l.nome))===norm(primeiroNome(nome))))||null;
+    out.push({nome,mat,tel,fim,plano:String(cel(r,'plano')).trim(),cons,existe});
+  }
+  return out;
+}
+function prevImp(){
+  if(!$('m-imp').classList.contains('on'))return;
+  const base=document.querySelector('input[name=i-fonte]:checked').value==='base';
+  if(!base&&!imp.rows.length){$('i-prev').textContent='Escolha a planilha.';$('i-ok').disabled=true;$('i-dist-c').hidden=true;return}
+  const ls=linhasImp(),fid=$('i-funil').value,ja=ls.filter(x=>x.existe&&funilDe(x.existe)===fid).length,sem=ls.filter(x=>!x.cons&&!(x.existe&&(x.existe.consultora_id||x.existe.venda_anual))).length;
+  $('i-prev').textContent=ls.length+' aluno(s) para o funil'+(ja?' ('+ja+' já estão nele)':'')+'. '+ls.filter(x=>x.existe).length+' já existem no Hub e serão aproveitados. '+sem+' sem consultor.';
+  const cons=axEquipe().filter(n=>((AX_CAMP.acessos||[]).find(a=>a.nome===n)||{}).papel==='consultor');
+  const per=cons.length?Math.floor(sem/cons.length):0;let resto=sem-per*cons.length;
+  $('i-dist').innerHTML=cons.map(n=>{const v=per+(resto-->0?1:0);return '<span>'+esc(n)+'</span><input type="number" min="0" data-n="'+esc(n)+'" value="'+v+'">'}).join('')+'<span class="info">Ficam sem consultor</span><span class="info" id="i-sobra"></span>';
+  $('i-dist').querySelectorAll('input').forEach(i=>i.oninput=sobra);sobra();
+  $('i-dist-c').hidden=!sem;$('i-ok').disabled=!ls.length;
+  function sobra(){const t=[...$('i-dist').querySelectorAll('input')].reduce((a,i)=>a+(parseInt(i.value,10)||0),0);$('i-sobra').textContent=Math.max(0,sem-t)+(t>sem?' (passou de '+sem+')':'')}
+}
+$('i-funil').addEventListener('change',prevImp);
+async function importar(){
+  const ls=linhasImp(),fid=$('i-funil').value,b=$('i-ok');if(!ls.length)return;
+  const fila=[];$('i-dist').querySelectorAll('input').forEach(i=>{for(let k=0;k<(parseInt(i.value,10)||0);k++)fila.push(i.dataset.n)});
+  b.disabled=true;b.textContent='Importando...';let ok=0,erro=0;const novos=[];
+  try{
+    for(const x of ls){
+      let cons=x.cons||(x.existe&&x.existe.consultora_id)||'';if(!cons&&fila.length&&!(x.existe&&x.existe.venda_anual))cons=fila.shift();
+      const resp=x.existe?Object.assign({},x.existe.respostas||{}):{};
+      if(x.plano)resp.plano=x.plano;if(x.fim)resp.plano_fim=x.fim;resp.fonte=resp.fonte||'sca';
+      if(x.existe){
+        const l=x.existe,d={funil:fid,respostas:resp};
+        if(funilDe(l)!==fid&&!l.venda_anual){d.etapa='lista';d.proximo_contato=null}
+        if(!l.consultora_id&&cons)d.consultora_id=cons;
+        if(x.tel&&!l.whatsapp_norm){d.whatsapp=tFmt(x.tel);d.whatsapp_norm='55'+x.tel}
+        try{await axPatchLead(l.id,d);ok++}catch(e){erro++}
+      }else novos.push({academia_id:AXI.AC,campanha_id:AX_CAMP.id,campanha_slug:AXI.SLUG,nome:x.nome,matricula:x.mat||null,whatsapp:x.tel?tFmt(x.tel):null,whatsapp_norm:x.tel?'55'+x.tel:null,origem:'base_sca',origem_primeira:'base_sca',funil:fid,etapa:'lista',consultora_id:cons||null,consentimento:true,status:'novo',respostas:resp,historico:[{data:new Date().toISOString(),campanha:AXI.SLUG,origem:'base_sca',por:AX_USER.nome,funil:fid}]});
+    }
+    for(let i=0;i<novos.length;i+=50){
+      const lote=novos.slice(i,i+50);
+      try{await axApi(AXI.P+'leads',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify(lote)});ok+=lote.length}
+      catch(e){for(const n of lote){try{await axApi(AXI.P+'leads',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify(n)});ok++}catch(e2){erro++}}}
+    }
+    $('m-imp').classList.remove('on');FUN=fid;try{localStorage.setItem('axi_funil',fid)}catch(e){}
+    await carregar();toast(ok+' aluno(s) no funil'+(erro?'. '+erro+' com erro (rode o SQL dos funis)':''));
+  }catch(e){$('i-erro').textContent='Erro: '+String(e.message).slice(0,140)}
+  finally{b.disabled=false;b.textContent='Importar'}
+}
 function cartao(l){
   const e=etapaDe(l),sp=situacaoProx(l),t=tentativasDe(l);
   let linha2='<span class="tag">'+esc(ORIGEM[l.origem]||l.origem||'Cadastro')+'</span>';
   if(l.indicado_por_codigo)linha2+='<span class="tag ind">Indicado por '+esc(primeiroNome(l.indicado_por_nome||l.indicado_por_codigo))+'</span>';
   if(e==='agendado'&&l.agendamento_tipo)linha2+='<span class="tag ag">'+esc(AGENDA[l.agendamento_tipo]||'')+(l.agendamento_em?' · '+dataHoraBR(l.agendamento_em):'')+'</span>';
-  if(l.venda_anual)linha2+='<span class="tag ok">Anual</span>';else if(l.venda_tipo==='outro')linha2+='<span class="tag ok">Mensal/outro</span>';
+  const pr=l.respostas||{};if(FUN!=='leads'&&(pr.plano_fim||pr.plano))linha2+='<span class="tag">'+esc(pr.plano_fim?'Vence '+dataBR(pr.plano_fim):pr.plano)+'</span>';
+  if(l.venda_anual)linha2+='<span class="tag ok">'+(FUN==='renovacao'?'Renovou':'Anual')+'</span>';else if(l.venda_tipo==='outro')linha2+='<span class="tag ok">Mensal/outro</span>';
   let linha3='';
   if(e==='novo'){linha3='Chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))}
-  else{linha3=(l.consultora_id?esc(l.consultora_id):'Sem consultor')+(t.length?' · '+t.length+' tentativa'+(t.length>1?'s':''):'')+(l.proximo_contato&&!['fechado','perdido'].includes(e)?' · próximo '+dataHoraBR(l.proximo_contato):'')}
-  const acao=e==='novo'&&!l.consultora_id?'<div class="ac"><button class="btn sm" onclick="assumir(\''+l.id+'\')">Assumir</button></div>':'';
-  return '<div class="kc '+(['fechado','perdido'].includes(e)?'':sp)+(e==='novo'?' nv':'')+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
+  else{linha3=(l.consultora_id||l.venda_consultor?esc(l.consultora_id||l.venda_consultor):'Sem consultor')+(t.length?' · '+t.length+' tentativa'+(t.length>1?'s':''):'')+(l.proximo_contato&&!etapaFim(e)?' · próximo '+dataHoraBR(l.proximo_contato):'')}
+  const acao=(e==='novo'||e==='lista')&&!l.consultora_id?'<div class="ac"><button class="btn sm" onclick="assumir(\''+l.id+'\')">Assumir</button></div>':'';
+  return '<div class="kc '+(etapaFim(e)?'':sp)+(e==='novo'?' nv':'')+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
 }
 async function assumir(id){
   const l=leads.find(x=>x.id===id);if(!l)return;
@@ -216,21 +356,25 @@ function abrirLead(id,alvo){
   const r=l.respostas||{};
   $('l-dados').innerHTML=[['WhatsApp',l.whatsapp||'sem número'],['Origem',ORIGEM[l.origem]||l.origem||''],l.utm_content||l.utm_campaign?['Anúncio',(l.utm_campaign||'')+(l.utm_content?' · '+l.utm_content:'')]:null,['Chegou',dataHoraBR(l.created_at)],['Consultor',l.consultora_id||'ninguém ainda'],l.indicado_por_codigo?['Indicado por',(l.indicado_por_nome||'')+' ('+l.indicado_por_codigo+')']:null,l.idade?['Idade',l.idade]:null,l.treina?['Treina hoje',{nao_treina:'Não treina',treina:'Treina'}[l.treina]||l.treina]:null,l.tempo_parado?['Parado há',{menos_3m:'menos de 3 meses','3a12m':'3 a 12 meses',mais_1a:'mais de 1 ano'}[l.tempo_parado]||l.tempo_parado]:null,l.utm_content?['Trazido por',l.utm_content]:null].filter(Boolean).map(([a,b])=>'<div><span>'+esc(a)+'</span>'+esc(b)+'</div>').join('');
   renderScripts(l);
+  const fo=funilObj(funilDe(l));
+  $('l-etapa').innerHTML=fo.etapas.map(e=>'<option value="'+e.id+'">'+e.n+'</option>').join('');
+  $('r-comp').hidden=!!fo.lista;
   document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.checked=false);
   $('l-etapa').value=alvo||etapaDe(l);$('l-obs').value='';
   $('l-prox').value=l.proximo_contato&&new Date(l.proximo_contato)>new Date()?localDT(l.proximo_contato):'';
-  $('l-agt').value=l.agendamento_tipo||'visita';$('l-agd').value=l.agendamento_em?localDT(l.agendamento_em):'';
+  $('l-agt').value=l.agendamento_tipo||(fo.lista?'matricula':'visita');$('l-agd').value=l.agendamento_em?localDT(l.agendamento_em):'';
   if(alvo){const c=document.querySelector('input[name=canal][value=nenhum]');c.checked=true}
   $('l-wa').href=wpp(l.whatsapp_norm)||'#';$('l-wa').hidden=!l.whatsapp_norm;
   const t=tentativasDe(l).slice().reverse();
-  $('l-hist').innerHTML=t.length?'<b>Histórico</b>'+t.map(x=>'<div>'+dataHoraBR(x.em)+' · <b>'+esc(x.por||'')+'</b> · '+esc(CANAL[x.canal]||'')+(x.resultado?' · '+esc(RES[x.resultado]||''):'')+(x.etapa?' → '+esc((ETAPAS.find(e=>e.id===x.etapa)||{}).n||''):'')+(x.obs?'<br><span class="info">'+esc(x.obs)+'</span>':'')+'</div>').join(''):'<span class="info">Nenhuma tentativa registrada ainda.</span>';
+  $('l-hist').innerHTML=t.length?'<b>Histórico</b>'+t.map(x=>'<div>'+dataHoraBR(x.em)+' · <b>'+esc(x.por||'')+'</b> · '+esc(CANAL[x.canal]||'')+(x.resultado?' · '+esc(RES[x.resultado]||''):'')+(x.etapa?' → '+esc((fo.etapas.find(e=>e.id===x.etapa)||{}).n||''):'')+(x.obs?'<br><span class="info">'+esc(x.obs)+'</span>':'')+'</div>').join(''):'<span class="info">Nenhuma tentativa registrada ainda.</span>';
   mudou();$('m-lead').classList.add('on');
 }
 function fechar(){$('m-lead').classList.remove('on');atual=null}
 document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.addEventListener('change',()=>{
-  const r=document.querySelector('input[name=res]:checked')?.value;
-  if(r&&RES_ETAPA[r])$('l-etapa').value=RES_ETAPA[r];
-  if(x.name==='canal'&&x.value!=='nenhum'&&atual&&etapaDe(atual)==='novo'&&$('l-etapa').value==='novo')$('l-etapa').value='boas_vindas';
+  const r=document.querySelector('input[name=res]:checked')?.value,fo=funilObj(atual?funilDe(atual):FUN);
+  const mapa=fo.lista?{sem_resposta:null,respondeu:'atendimento',agendou:'agendado',compareceu:'agendado',fechou_anual:'ganho',fechou_mensal:'ganho',perdido:'perdido'}:RES_ETAPA;
+  if(r&&mapa[r])$('l-etapa').value=mapa[r];
+  if(atual&&x.value!=='nenhum'&&etapaDe(atual)===fo.ini&&$('l-etapa').value===fo.ini&&(x.name==='canal'||r==='sem_resposta'))$('l-etapa').value=fo.prim;
   if(r&&!$('l-prox').value&&!['fechou_anual','fechou_mensal','perdido'].includes(r))$('l-prox').value=sugestaoProx();
   mudou();
 }));
@@ -240,7 +384,7 @@ function mudou(){
   $('l-ag').hidden=!(r==='agendou'||e==='agendado');
   $('l-men').hidden=r!=='fechou_mensal';
   $('l-perd-c').hidden=!(r==='perdido'||e==='perdido');
-  const fim=['fechado','perdido'].includes(e);$('l-prox-c').hidden=fim;
+  const fim=etapaFim(e);$('l-prox-c').hidden=fim;
   $('l-ok').textContent=r==='fechou_anual'?'Salvar e registrar o anual':'Salvar';
   // aviso de intervalo: até 2 dias, ou 3 com fim de semana
   const v=$('l-prox').value;let info='';
@@ -253,7 +397,7 @@ async function salvar(){
   const canal=document.querySelector('input[name=canal]:checked')?.value,r=document.querySelector('input[name=res]:checked')?.value||null,e=$('l-etapa').value;
   document.querySelectorAll('#m-lead .campo').forEach(c=>c.classList.remove('inv'));$('l-erro').textContent='';
   if(!canal){document.querySelector('[data-c=canal]').classList.add('inv');$('l-erro').textContent='Diga como foi o contato.';return}
-  const fim=['fechado','perdido'].includes(e);
+  const fim=etapaFim(e);
   if(!fim&&!$('l-prox').value){document.querySelector('[data-c=prox]').classList.add('inv');$('l-erro').textContent='Defina o próximo contato. Nenhum lead fica sem data.';return}
   if(e==='agendado'&&!$('l-agd').value){document.querySelector('[data-c=agd]').classList.add('inv');$('l-erro').textContent='Informe o dia e a hora do agendamento.';return}
   const agora=new Date().toISOString();
@@ -271,7 +415,7 @@ async function salvar(){
   try{
     await axPatchLead(l.id,d);Object.assign(l,d);
     fechar();render();
-    if(r==='fechou_anual'){toast('Agora registre o anual e envie o cupom');location.href='cupons.html?venda='+encodeURIComponent(l.id)+'&volta=leads.html';return}
+    if(r==='fechou_anual'){toast('Agora registre o anual e envie o cupom');location.href='cupons.html?venda='+encodeURIComponent(l.id)+(funilDe(l)!=='leads'?'&tipo=renovacao':'')+'&volta=leads.html';return}
     toast('Salvo');
   }catch(err){$('l-erro').textContent='Não foi possível salvar: '+String(err.message).slice(0,140)+(err.status===400?' (rode o SQL da Central de Leads)':'')}
   finally{b.disabled=false}

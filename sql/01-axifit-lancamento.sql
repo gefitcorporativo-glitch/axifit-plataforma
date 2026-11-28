@@ -206,3 +206,7 @@ alter table axifit_venda_ajustes disable row level security;
 
 -- 12) Ciclo do lançamento: início, encerramento de cada lote e fim do ciclo (24/11/2026)
 alter table axifit_lead_campanhas add column if not exists ciclo jsonb default '{}'::jsonb;
+
+-- 13) Funis: Leads novos, Renovação e listas importadas (28/11/2026)
+alter table axifit_leads add column if not exists funil text;
+alter table axifit_lead_campanhas add column if not exists funis jsonb default '[]'::jsonb;

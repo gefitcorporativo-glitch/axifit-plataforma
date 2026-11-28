@@ -15,7 +15,7 @@ const ETAPAS=[
   {id:'fechado',n:'Fechado',d:'Comprou'},
   {id:'perdido',n:'Perdido',d:'Encerrado sem venda'}
 ];
-const AGENDA={visita:'Visita agendada',consultoria:'Consultoria agendada',experiencia:'Experiência agendada'};
+const AGENDA={visita:'Visita agendada',consultoria:'Consultoria agendada',experiencia:'Experiência agendada',matricula:'Matrícula agendada'};
 const LOTE_N={lote1:'Lote 1',lote2:'Lote 2',inauguracao:'Lote de Inauguração'};
 let AX_CAMP=null, AX_USER=null;
 
@@ -119,12 +119,32 @@ function minutosUteis(ini,fim){
 function selo(min){const c=min<=5?'ok':min<=10?'at':'ru';const t=min<60?min+' min':Math.floor(min/60)+'h'+String(min%60).padStart(2,'0');return '<span class="ax-selo '+c+'" title="Tempo de resposta no horário de funcionamento. Ideal até 5 min, atenção até 10 min.">'+t+'</span>'}
 
 /* etapa efetiva de um lead no Kanban */
+/* funis: Leads novos, Renovação e listas criadas pela liderança */
+function etapasLista(ganho){return [{id:'lista',n:'Lista',d:'Ainda sem contato'},{id:'tentativa',n:'1ª tentativa',d:'Mensagem ou ligação feita'},{id:'atendimento',n:'Atendimento iniciado',d:'Respondeu'},{id:'agendado',n:'Matrícula agendada',d:'Dia e hora marcados'},{id:'ganho',n:ganho,d:'Venda do lançamento'},{id:'perdido',n:'Perdido',d:'Encerrado sem venda'}]}
+const FUNIL_LEADS={id:'leads',nome:'Leads novos',etapas:ETAPAS,ini:'novo',prim:'boas_vindas',ganho:'fechado'};
+const FUNIL_RENOV={id:'renovacao',nome:'Renovação',etapas:etapasLista('Renovou'),ini:'lista',prim:'tentativa',ganho:'ganho',lista:true};
+function axFunis(){return [FUNIL_LEADS,FUNIL_RENOV].concat(((AX_CAMP&&AX_CAMP.funis)||[]).filter(f=>f&&f.id&&!f.arquivado).map(f=>({id:f.id,nome:f.nome,etapas:etapasLista('Convertido'),ini:'lista',prim:'tentativa',ganho:'ganho',lista:true,custom:true})))}
+function funilObj(id){return axFunis().find(f=>f.id===id)||FUNIL_LEADS}
+function funilDe(l){
+  if(l.oculto)return null;
+  if(l.funil)return l.funil;
+  if(['renovacao','upgrade'].includes(l.venda_tipo))return 'renovacao';
+  if(l.venda_tipo==='ja_anual'||l.origem==='base_sca')return null;
+  return 'leads';
+}
 function etapaDe(l){
+  const f=funilDe(l);
+  if(f&&f!=='leads'){
+    if(l.venda_anual||l.venda_tipo==='outro')return 'ganho';
+    const fo=funilObj(f);return fo.etapas.some(e=>e.id===l.etapa)?l.etapa:'lista';
+  }
   if(l.etapa)return l.etapa;
   if(l.venda_anual||l.venda_tipo==='outro')return 'fechado';
   return 'novo';
 }
-const noKanban=l=>l.venda_tipo!=='ja_anual'&&l.origem!=='base_sca'&&!l.oculto;
+const etapaFim=e=>['fechado','perdido','ganho'].includes(e);
+function etapaNome(l){const fo=funilObj(funilDe(l));return ((fo.etapas.find(e=>e.id===etapaDe(l))||{}).n)||''}
+const noKanban=l=>funilDe(l)==='leads';
 const tentativasDe=l=>Array.isArray(l.tentativas)?l.tentativas:[];
 
 /* estilo comum */
