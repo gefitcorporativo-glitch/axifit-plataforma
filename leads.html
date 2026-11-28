@@ -65,7 +65,7 @@
     <select class="busca" id="f-cons" style="min-width:170px" onchange="render()"></select>
     <label class="info" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="f-perd" onchange="render()"> Mostrar perdidos</label>
     <label class="info" id="f-ant-c" style="display:flex;gap:6px;align-items:center" hidden><input type="checkbox" id="f-ant" onchange="filtrarFunil();render()"> <span id="f-ant-t">Mostrar contatos antigos</span></label>
-    <button class="btn sm so-g" id="b-zerar" hidden onclick="zerarTarefas()">Começar o acompanhamento do zero</button>
+    <button class="btn sm" id="b-zerar" hidden onclick="zerarTarefas()">Começar o acompanhamento do zero</button>
     <span class="esp"></span>
     <span class="info">Clique no card para registrar a tentativa. Arraste para mudar de etapa.</span>
   </div>
@@ -187,7 +187,7 @@ function render(){
   const cols=fo.etapas.filter(e=>e.id!=='perdido'||mostraPerd);
   $('funis').innerHTML=axFunis().map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))&&!antigo(l)).length+'</span></button>').join('');
   $('b-novo').hidden=FUN!=='leads';
-  {const ini=acompInicio(),n=todos.filter(antigo).length;$('f-ant-c').hidden=!(ini&&n&&FUN==='leads');$('f-ant-t').textContent='Mostrar '+n+' contato(s) de antes de '+(ini?dataBR(ini):'');$('b-zerar').hidden=!ehGestor()||FUN!=='leads'}
+  {const ini=acompInicio(),n=todos.filter(antigo).length;$('f-ant-c').hidden=!(ini&&n&&FUN==='leads');$('f-ant-t').textContent='Mostrar '+n+' contato(s) de antes de '+(ini?dataBR(ini):'');$('b-zerar').hidden=AX_USER.papel!=='admin'||FUN!=='leads'||!!acompInicio()}
   // indicadores do topo
   const fila=leads.filter(l=>etapaDe(l)===fo.ini),atrasos=leads.filter(l=>situacaoProx(l)==='atraso'&&!etapaFim(etapaDe(l)));
   const resp=leads.filter(l=>l.primeira_tentativa_em).map(l=>minutosUteis(l.created_at,l.primeira_tentativa_em));
