@@ -90,6 +90,9 @@ function axTelaLogin(){return new Promise(resolve=>{
   bt.onclick=ir;p.addEventListener('keydown',e=>{if(e.key==='Enter')ir()});
 })}
 function axEquipe(){const a=(AX_CAMP&&AX_CAMP.acessos)||[];return a.map(x=>x.nome)}
+/* só consultores de vendas podem ser responsáveis por um cliente */
+function axConsultores(){return ((AX_CAMP&&AX_CAMP.acessos)||[]).filter(x=>x.papel==='consultor').map(x=>x.nome)}
+const ehConsultorVenda=n=>!!n&&axConsultores().includes(n);
 function axRegras(){return (AX_CAMP&&AX_CAMP.regras&&typeof AX_CAMP.regras==='object')?AX_CAMP.regras:{}}
 
 /* Menu do topo, igual em todas as telas internas */

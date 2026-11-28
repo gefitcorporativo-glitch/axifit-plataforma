@@ -544,7 +544,7 @@ function abrirVenda(id,tipo){
    $('v-dep').checked=!!(l&&l.wpp_responsavel);$('v-resp').value=(l&&l.responsavel_nome)||'';$('v-wpp2').value=(l&&l.wpp_responsavel&&l.whatsapp)||'';depMudou()}
   if(tipo){const r=document.querySelector('input[name=v-tipo][value='+tipo+']');if(r)r.checked=true}
   $('op-outro').hidden=!(regras().ja_anual_qualquer_plano||(l&&l.venda_tipo==='outro'));
-  {const eq=nomesEquipe(),atual=(l&&(l.venda_consultor||l.consultora_id))||(eq.includes(usuario)?usuario:'');const ops=[...eq];if(atual&&!ops.includes(atual))ops.push(atual);
+  {const eq=acessos().filter(x=>x.papel==='consultor').map(x=>x.nome),cand=[l&&l.venda_consultor,l&&l.consultora_id,usuario].find(n=>n&&eq.includes(n)),atual=cand||'';const ops=[...eq];if(l&&l.venda_consultor&&!ops.includes(l.venda_consultor))ops.push(l.venda_consultor);
    $('v-cons').innerHTML='<option value="">Escolha quem atendeu</option>'+ops.map(n=>'<option'+(n===atual?' selected':'')+'>'+esc(n)+'</option>').join('');
    const lp=(l&&l.venda_lancado_por)||usuario;$('v-lanc').textContent='Lançado por '+lp+(l&&l.venda_lancado_por?'':' (você)')+'. O responsável é quem atendeu o aluno.'}
   $('v-desfazer').hidden=!(l&&(ehPart(l)||l.venda_tipo==='outro'));
@@ -662,6 +662,7 @@ async function salvarVenda(){
   }
   if(t==='outro'&&!indCod&&!(l&&l.indicado_por_codigo)){err.textContent='Outro plano só se registra para amigo indicado. Informe quem indicou.';return}
   const cons=$('v-cons').value.trim();if(!cons){document.querySelector('[data-c=cons]').classList.add('inv');err.textContent='Escolha o consultor responsável pela venda.';return}
+  if(!acessos().some(x=>x.papel==='consultor'&&x.nome===cons)&&!(vendaLead&&vendaLead.venda_consultor===cons)){document.querySelector('[data-c=cons]').classList.add('inv');err.textContent='O responsável precisa ser um consultor de vendas (Nathália, Pedro ou Jéssica).';return}
   const lancado=(l&&l.venda_lancado_por)||usuario||null;
   const cond=(t==='novo'||t==='renovacao')&&ehCondicao();
   if(cond&&!$('v-cmot').value.trim()){document.querySelector('[data-c=cmot]').classList.add('inv');err.textContent='Informe o motivo da condição especial.';return}

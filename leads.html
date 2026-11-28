@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex">
 <title>Central de Leads · AxiFit</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="axi-comum.js?v=20261128d"></script>
-<script src="scripts-lancamento.js?v=20261128d"></script>
+<script src="axi-comum.js?v=20261128e"></script>
+<script src="scripts-lancamento.js?v=20261128e"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 .funis{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:10px}
@@ -105,6 +105,7 @@
   <div class="campo" id="l-perd-c" hidden><label for="l-perd">Motivo</label><select id="l-perd"><option>Sem resposta depois da cadência</option><option>Preço</option><option>Sem limite no cartão</option><option>Distância ou horário</option><option>Escolheu outra academia</option><option>Não quer treinar agora</option><option>Outro</option></select></div>
   <div class="lin">
     <div class="campo"><label for="l-etapa">Etapa</label><select id="l-etapa"></select></div>
+    <div class="campo" data-c="resp" id="l-resp-c" hidden><label for="l-resp">Consultor responsável</label><select id="l-resp"></select></div>
     <div class="campo" data-c="prox" id="l-prox-c"><label for="l-prox">Próximo contato</label><input type="datetime-local" id="l-prox"><div class="info" id="l-prox-info"></div></div>
   </div>
   <div class="campo"><label for="l-obs">Observação</label><input id="l-obs" placeholder="O que foi conversado"></div>
@@ -123,6 +124,7 @@
   <p class="info" style="margin-top:0">Para quem chegou pelo WhatsApp, pelo Instagram ou no balcão sem passar pela página de cadastro.</p>
   <div class="campo"><label for="n-nome">Nome</label><input id="n-nome"></div>
   <div class="campo"><label for="n-wpp">WhatsApp</label><input id="n-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
+  <div class="campo" id="n-resp-c" hidden><label for="n-resp">Consultor responsável</label><select id="n-resp"></select></div>
   <div class="campo"><label for="n-ori">Origem</label><select id="n-ori"><option value="whatsapp">WhatsApp</option><option value="trafego_pago">Anúncio</option><option value="instagram">Instagram orgânico</option><option value="balcao">Balcão</option><option value="indicacao">Indicação (sem link)</option><option value="outro">Outro</option></select></div>
   <div class="erro" id="n-erro"></div>
   <div class="rod"><button class="btn pri" onclick="criarLead()">Criar lead</button></div>
@@ -156,7 +158,7 @@ const RES_ETAPA={sem_resposta:null,respondeu:'atendimento',agendou:'agendado',co
 (async function(){
   await axEntrar('leads.html');
   axTopo('Central de Leads','Lançamento da nova AxiFit · do cadastro ao fechamento','leads.html');
-  $('f-cons').innerHTML='<option value="">Todos os consultores</option><option value="__fila">Só a fila sem consultor</option><option value="__meus">Só os meus</option>'+axEquipe().map(n=>'<option>'+esc(n)+'</option>').join('');
+  $('f-cons').innerHTML='<option value="">Todos os consultores</option><option value="__fila">Só a fila sem consultor</option><option value="__meus">Só os meus</option><option value="__lid">Sem consultor de vendas (corrigir)</option>'+axConsultores().map(n=>'<option>'+esc(n)+'</option>').join('');
   if(!ehGestor())$('f-cons').value='';
   document.querySelectorAll('.so-g').forEach(b=>b.hidden=!ehGestor());
   if(!axFunis().some(f=>f.id===FUN))FUN='leads';
@@ -173,6 +175,7 @@ function filtrados(){
     if(q&&!(norm(l.nome).includes(q)||(qd.length>=4&&(l.whatsapp_norm||'').includes(qd))))return false;
     if(c==='__fila')return !l.consultora_id;
     if(c==='__meus')return l.consultora_id===AX_USER.nome;
+    if(c==='__lid')return !!l.consultora_id&&!ehConsultorVenda(l.consultora_id);
     if(c)return l.consultora_id===c;
     return true;
   });
@@ -287,7 +290,7 @@ function linhasImp(){
     const mat=String(cel(r,'mat')).trim().replace(/\.0$/,''),tel=tNorm(cel(r,'tel')),fim=dISO(cel(r,'fim'));
     if(!noPeriodo(fim))continue;
     const chave=mat||tel+'|'+nome;if(visto.has(chave))continue;visto.add(chave);
-    let cons=String(cel(r,'cons')).trim();const ce=eq.find(n=>norm(n)===norm(cons)||norm(primeiroNome(n))===norm(primeiroNome(cons)));cons=ce||'';
+    let cons=String(cel(r,'cons')).trim();const ce=axConsultores().find(n=>norm(n)===norm(cons)||norm(primeiroNome(n))===norm(primeiroNome(cons)));cons=ce||'';
     const existe=(mat&&todos.find(l=>String(l.matricula||'').toUpperCase()===mat.toUpperCase()))||(tel&&todos.find(l=>l.whatsapp_norm==='55'+tel&&norm(primeiroNome(l.nome))===norm(primeiroNome(nome))))||null;
     out.push({nome,mat,tel,fim,plano:String(cel(r,'plano')).trim(),cons,existe});
   }
@@ -313,7 +316,7 @@ async function importar(){
   b.disabled=true;b.textContent='Importando...';let ok=0,erro=0;const novos=[];
   try{
     for(const x of ls){
-      let cons=x.cons||(x.existe&&x.existe.consultora_id)||'';if(!cons&&fila.length&&!(x.existe&&x.existe.venda_anual))cons=fila.shift();
+      let cons=x.cons||(x.existe&&ehConsultorVenda(x.existe.consultora_id)?x.existe.consultora_id:'')||'';if(!cons&&fila.length&&!(x.existe&&x.existe.venda_anual))cons=fila.shift();
       const resp=x.existe?Object.assign({},x.existe.respostas||{}):{};
       if(x.plano)resp.plano=x.plano;if(x.fim)resp.plano_fim=x.fim;resp.fonte=resp.fonte||'sca';
       if(x.existe){
@@ -341,14 +344,16 @@ function cartao(l){
   if(e==='agendado'&&l.agendamento_tipo)linha2+='<span class="tag ag">'+esc(AGENDA[l.agendamento_tipo]||'')+(l.agendamento_em?' · '+dataHoraBR(l.agendamento_em):'')+'</span>';
   const pr=l.respostas||{};if(FUN!=='leads'&&(pr.plano_fim||pr.plano))linha2+='<span class="tag">'+esc(pr.plano_fim?'Vence '+dataBR(pr.plano_fim):pr.plano)+'</span>';
   if(l.venda_anual)linha2+='<span class="tag ok">'+(FUN==='renovacao'?'Renovou':'Anual')+'</span>';else if(l.venda_tipo==='outro')linha2+='<span class="tag ok">Mensal/outro</span>';
-  let linha3='';
+  let linha3='';const respRuim=l.consultora_id&&!ehConsultorVenda(l.consultora_id)&&!etapaFim(e);
   if(e==='novo'){linha3='Chegou '+dataHoraBR(l.created_at)+' '+selo(minutosUteis(l.created_at))}
   else{linha3=(l.consultora_id||l.venda_consultor?esc(l.consultora_id||l.venda_consultor):'Sem consultor')+(t.length?' · '+t.length+' tentativa'+(t.length>1?'s':''):'')+(l.proximo_contato&&!etapaFim(e)?' · próximo '+dataHoraBR(l.proximo_contato):'')}
+  if(respRuim)linha3+=' <span class="ax-selo ru">sem consultor de vendas</span>';
   const acao=(e==='novo'||e==='lista')&&!l.consultora_id?'<div class="ac"><button class="btn sm" onclick="assumir(\''+l.id+'\')">Assumir</button></div>':'';
   return '<div class="kc '+(etapaFim(e)?'':sp)+(e==='novo'?' nv':'')+'" data-id="'+l.id+'"><div class="nm">'+esc(l.nome)+'</div><div class="ln">'+linha2+'</div><div class="ln">'+linha3+'</div>'+acao+'</div>';
 }
 async function assumir(id){
   const l=leads.find(x=>x.id===id);if(!l)return;
+  if(AX_USER.papel!=='consultor'){abrirLead(id);toast('Escolha o consultor responsável e registre o contato.');return}
   try{await axPatchLead(id,{consultora_id:AX_USER.nome,assumido_em:new Date().toISOString()});l.consultora_id=AX_USER.nome;l.assumido_em=new Date().toISOString();render();toast('Lead assumido. Envie a boas-vindas e registre a tentativa.')}
   catch(e){toast('Não foi possível assumir. Rode o SQL da Central de Leads.')}
 }
@@ -371,6 +376,9 @@ function abrirLead(id,alvo){
   const fo=funilObj(funilDe(l));
   $('l-etapa').innerHTML=fo.etapas.map(e=>'<option value="'+e.id+'">'+e.n+'</option>').join('');
   $('r-comp').hidden=!!fo.lista;
+  {const cs=axConsultores(),eu=AX_USER.papel==='consultor',ok=ehConsultorVenda(l.consultora_id);
+   $('l-resp').innerHTML='<option value="">Escolha o consultor</option>'+cs.map(n=>'<option'+(n===l.consultora_id?' selected':'')+'>'+esc(n)+'</option>').join('');
+   $('l-resp-c').hidden=eu&&(ok||!l.consultora_id);}
   document.querySelectorAll('#m-lead input[type=radio]').forEach(x=>x.checked=false);
   $('l-etapa').value=alvo||etapaDe(l);$('l-obs').value='';
   $('l-prox').value=l.proximo_contato&&new Date(l.proximo_contato)>new Date()?localDT(l.proximo_contato):'';
@@ -409,7 +417,7 @@ async function salvar(){
   const canal=document.querySelector('input[name=canal]:checked')?.value,r=document.querySelector('input[name=res]:checked')?.value||null,e=$('l-etapa').value;
   document.querySelectorAll('#m-lead .campo').forEach(c=>c.classList.remove('inv'));$('l-erro').textContent='';
   if(!canal){document.querySelector('[data-c=canal]').classList.add('inv');$('l-erro').textContent='Diga como foi o contato.';return}
-  const fim=etapaFim(e);
+  const fim=etapaFim(e),fo0=funilObj(funilDe(l));
   if(!fim&&!$('l-prox').value){document.querySelector('[data-c=prox]').classList.add('inv');$('l-erro').textContent='Defina o próximo contato. Nenhum lead fica sem data.';return}
   if(e==='agendado'&&!$('l-agd').value){document.querySelector('[data-c=agd]').classList.add('inv');$('l-erro').textContent='Informe o dia e a hora do agendamento.';return}
   const agora=new Date().toISOString();
@@ -418,7 +426,8 @@ async function salvar(){
   if(e==='agendado'||r==='agendou')reg.agenda=$('l-agt').value;
   const tent=tentativasDe(l).concat([reg]);
   const d={tentativas:tent,etapa:e,proximo_contato:fim?null:new Date($('l-prox').value).toISOString()};
-  if(!l.consultora_id&&canal!=='nenhum')d.consultora_id=AX_USER.nome;
+  if(AX_USER.papel==='consultor'){if(!ehConsultorVenda(l.consultora_id)&&canal!=='nenhum')d.consultora_id=AX_USER.nome;if(!$('l-resp-c').hidden&&$('l-resp').value)d.consultora_id=$('l-resp').value}
+  else{const rp=$('l-resp').value;if(!rp&&(canal!=='nenhum'||!ehConsultorVenda(l.consultora_id))&&!(e===fo0.ini&&canal==='nenhum')){document.querySelector('[data-c=resp]').classList.add('inv');$('l-erro').textContent='Escolha o consultor responsável (Nathália, Pedro ou Jéssica).';return}if(rp)d.consultora_id=rp}
   if(!l.primeira_tentativa_em&&canal!=='nenhum')d.primeira_tentativa_em=agora;
   if(e==='agendado'||r==='agendou'){d.agendamento_tipo=$('l-agt').value;d.agendamento_em=new Date($('l-agd').value).toISOString()}
   if(e==='perdido')d.perdido_motivo=$('l-perd').value;
@@ -432,15 +441,16 @@ async function salvar(){
   }catch(err){$('l-erro').textContent='Não foi possível salvar: '+String(err.message).slice(0,140)+(err.status===400?' (rode o SQL da Central de Leads)':'')}
   finally{b.disabled=false}
 }
-function abrirNovo(){$('n-nome').value='';$('n-wpp').value='';$('n-erro').textContent='';$('m-novo').classList.add('on')}
+function abrirNovo(){$('n-nome').value='';$('n-wpp').value='';$('n-erro').textContent='';const g=AX_USER.papel!=='consultor';$('n-resp-c').hidden=!g;$('n-resp').innerHTML='<option value="">Escolha o consultor</option>'+axConsultores().map(n=>'<option>'+esc(n)+'</option>').join('');$('m-novo').classList.add('on')}
 $('n-wpp').addEventListener('input',()=>{const w=$('n-wpp');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
 async function criarLead(){
   const nome=$('n-nome').value.trim().replace(/\s+/g,' '),dig=$('n-wpp').value.replace(/\D/g,'');
   if(nome.length<3||dig.length<10){$('n-erro').textContent='Preencha nome e WhatsApp com DDD.';return}
+  const rsp=AX_USER.papel==='consultor'?null:$('n-resp').value;if(AX_USER.papel!=='consultor'&&!rsp){$('n-erro').textContent='Escolha o consultor responsável.';return}
   const wn='55'+dig,ja=leads.find(x=>x.whatsapp_norm===wn);
   if(ja){$('n-erro').textContent='Esse WhatsApp já está na Central como '+ja.nome+'.';return}
   try{
-    const r=await axApi(AXI.P+'leads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({academia_id:AXI.AC,campanha_id:AX_CAMP.id,campanha_slug:AXI.SLUG,nome,whatsapp:$('n-wpp').value,whatsapp_norm:wn,origem:$('n-ori').value,origem_primeira:$('n-ori').value,consentimento:true,status:'novo',etapa:'novo',historico:[{data:new Date().toISOString(),campanha:AXI.SLUG,origem:$('n-ori').value,por:AX_USER.nome}]})});
+    const r=await axApi(AXI.P+'leads',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify({academia_id:AXI.AC,campanha_id:AX_CAMP.id,campanha_slug:AXI.SLUG,nome,whatsapp:$('n-wpp').value,whatsapp_norm:wn,origem:$('n-ori').value,origem_primeira:$('n-ori').value,consentimento:true,consultora_id:rsp||null,status:'novo',etapa:'novo',historico:[{data:new Date().toISOString(),campanha:AXI.SLUG,origem:$('n-ori').value,por:AX_USER.nome}]})});
     $('m-novo').classList.remove('on');await carregar();toast('Lead criado na fila de novos leads');
   }catch(e){$('n-erro').textContent='Não foi possível criar: '+String(e.message).slice(0,140)}
 }
