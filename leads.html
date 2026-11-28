@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex">
 <title>Central de Leads · AxiFit</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="axi-comum.js?v=20261128c"></script>
-<script src="scripts-lancamento.js?v=20261128c"></script>
+<script src="axi-comum.js?v=20261128d"></script>
+<script src="scripts-lancamento.js?v=20261128d"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 .funis{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:10px}
@@ -227,9 +227,9 @@ async function zerarTarefas(){
   const agora=new Date().toISOString();
   const n=todos.filter(l=>funilDe(l)==='leads'&&String(l.created_at||'')<agora&&!l.indicado_por_codigo&&!tentativasDe(l).length&&!l.venda_anual&&l.venda_tipo!=='outro').length;
   if(!confirm('Começar o acompanhamento do zero a partir de agora?\n\n'+n+' contato(s) antigo(s), sem nenhuma tentativa registrada, saem da Central e das Missões. Nada é apagado: dá para ver de novo marcando "Mostrar contatos antigos".\n\nFicam: indicados pelo link, quem já tem tentativa registrada, vendas e os funis de listas.'))return;
-  const regras=Object.assign({},AX_CAMP.regras||{},{acomp_inicio:agora,acomp_por:AX_USER.nome});
-  try{await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({regras})});AX_CAMP.regras=regras;filtrarFunil();render();toast('Pronto: o acompanhamento começa agora.')}
-  catch(e){toast('Não foi possível salvar.')}
+  const ciclo=Object.assign({},AX_CAMP.ciclo||{},{acomp_inicio:agora,acomp_por:AX_USER.nome});
+  try{await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({ciclo})});AX_CAMP.ciclo=ciclo;filtrarFunil();render();toast('Pronto: o acompanhamento começa agora.')}
+  catch(e){toast('Não foi possível salvar: '+String(e.message||e).slice(0,120))}
 }
 async function salvarFunis(lista){await axApi(AXI.P+'lead_campanhas?id=eq.'+AX_CAMP.id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({funis:lista})});AX_CAMP.funis=lista}
 async function novoFunil(){
