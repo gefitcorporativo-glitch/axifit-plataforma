@@ -6,10 +6,11 @@
 <meta name="robots" content="noindex">
 <title>Central de Leads · AxiFit</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="axi-comum.js?v=20261128e"></script>
-<script src="scripts-lancamento.js?v=20261128e"></script>
+<script src="axi-comum.js?v=20261128f"></script>
+<script src="scripts-lancamento.js?v=20261128f"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+.conf{border:1.5px solid #E10600;background:#FFF5F4;border-radius:12px;padding:12px 14px;margin-bottom:12px}.conf .cb{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 6px}
 .funis{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .funis .fb{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font:600 15px 'Space Grotesk',Inter,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center}
 .funis .fb span{background:#EEF0F3;border-radius:999px;padding:0 8px;font:700 12px Inter}
@@ -77,6 +78,11 @@
 <div class="fundo" id="m-lead"><div class="modal">
   <div class="mhead"><h2 id="l-tit">Lead</h2><button class="x" onclick="fechar()" aria-label="Fechar">×</button></div>
   <div class="dados" id="l-dados"></div>
+  <div class="conf" id="l-conf" hidden>
+    <b>Este contato foi cadastrado no começo do lançamento. Confira no SCA:</b>
+    <div class="cb"><button class="btn pri" onclick="confAcao('lead')">Ainda é lead: seguir na cadência</button><button class="btn" onclick="confAcao('venda')">Comprou: registrar a venda</button><button class="btn" onclick="confAcao('aluno')">Já era aluno, não comprou no lançamento</button></div>
+    <div class="info">Se for lead, ele volta para Leads novos com contato marcado para hoje. Nada é apagado.</div>
+  </div>
   <details class="scr" id="l-scr" open></details>
   <div class="campo" data-c="canal"><span class="lb">Como foi o contato</span><div class="chips">
     <label><input type="radio" name="canal" value="ligacao"> Ligação</label>
@@ -125,7 +131,7 @@
   <div class="campo"><label for="n-nome">Nome</label><input id="n-nome"></div>
   <div class="campo"><label for="n-wpp">WhatsApp</label><input id="n-wpp" inputmode="tel" placeholder="(00) 00000-0000"></div>
   <div class="campo" id="n-resp-c" hidden><label for="n-resp">Consultor responsável</label><select id="n-resp"></select></div>
-  <div class="campo"><label for="n-ori">Origem</label><select id="n-ori"><option value="whatsapp">WhatsApp</option><option value="trafego_pago">Anúncio</option><option value="instagram">Instagram orgânico</option><option value="balcao">Balcão</option><option value="indicacao">Indicação (sem link)</option><option value="outro">Outro</option></select></div>
+  <div class="campo"><label for="n-ori">Origem</label><select id="n-ori"><option value="">Escolha de onde a pessoa veio</option><option value="whatsapp">WhatsApp (chamou direto, sem anúncio)</option><option value="trafego_pago">Anúncio (tráfego pago)</option><option value="instagram">Instagram orgânico</option><option value="balcao">Balcão</option><option value="indicacao">Indicação (sem link)</option><option value="outro">Outro</option></select></div>
   <div class="erro" id="n-erro"></div>
   <div class="rod"><button class="btn pri" onclick="criarLead()">Criar lead</button></div>
 </div></div>
@@ -186,9 +192,10 @@ function situacaoProx(l){
   return d<h?'atraso':d===h?'hoje':'';
 }
 function render(){
+  if(FUN==='conferir'&&!todos.some(l=>funilDe(l)==='conferir')){FUN='leads';try{localStorage.setItem('axi_funil','leads')}catch(e){}filtrarFunil()}
   const fs=filtrados(),mostraPerd=$('f-perd').checked,fo=funilObj(FUN);
   const cols=fo.etapas.filter(e=>e.id!=='perdido'||mostraPerd);
-  $('funis').innerHTML=axFunis().map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))&&!antigo(l)).length+'</span></button>').join('');
+  $('funis').innerHTML=axFunis().filter(f=>!f.conferir||todos.some(l=>funilDe(l)==='conferir')).map(f=>'<button class="fb'+(f.id===FUN?' on':'')+'" onclick="trocarFunil(\''+f.id+'\')">'+esc(f.nome)+' <span>'+todos.filter(l=>funilDe(l)===f.id&&!etapaFim(etapaDe(l))&&!antigo(l)).length+'</span></button>').join('');
   $('b-novo').hidden=FUN!=='leads';
   {const ini=acompInicio(),n=todos.filter(antigo).length;$('f-ant-c').hidden=!(ini&&n&&FUN==='leads');$('f-ant-t').textContent='Mostrar '+n+' contato(s) de antes de '+(ini?dataBR(ini):'');$('b-zerar').hidden=AX_USER.papel!=='admin'||FUN!=='leads'||!!acompInicio()}
   // indicadores do topo
@@ -226,6 +233,19 @@ addEventListener('resize',ajustarAltura);
 document.addEventListener('mousemove',ev=>{if(!on)return;$('kan').scrollLeft=s0-(ev.pageX-x0)});
 document.addEventListener('mouseup',()=>{if(!on)return;on=false;$('kan').classList.remove('arr')})})();
 function trocarFunil(id){FUN=id;try{localStorage.setItem('axi_funil',id)}catch(e){}filtrarFunil();$('kan').scrollLeft=0;render()}
+async function confAcao(tipo){
+  const l=atual;if(!l)return;
+  let resp=ehConsultorVenda(l.consultora_id)?l.consultora_id:($('l-resp').value||(AX_USER.papel==='consultor'?AX_USER.nome:''));
+  if(!resp){document.querySelector('[data-c=resp]').classList.add('inv');$('l-erro').textContent='Escolha o consultor responsável (Nathália, Pedro ou Jéssica) antes.';return}
+  const agora=new Date(),reg={em:agora.toISOString(),por:AX_USER.nome,canal:'nenhum',resultado:null,etapa:null,obs:{lead:'Conferido: ainda é lead, segue na cadência',venda:'Conferido: comprou no lançamento',aluno:'Conferido: já era aluno, não comprou no lançamento'}[tipo]};
+  const d={funil:'leads',consultora_id:resp,tentativas:tentativasDe(l).concat([reg])};
+  if(tipo==='lead'){const h=new Date();h.setHours(Math.max(h.getHours()+1,10),0,0,0);d.proximo_contato=h.toISOString();if(!l.etapa||l.etapa==='novo')d.etapa=l.primeira_tentativa_em?'boas_vindas':'novo'}
+  if(tipo==='aluno'){d.etapa='perdido';d.perdido_motivo='Já era aluno';d.proximo_contato=null}
+  try{await axPatchLead(l.id,d);Object.assign(l,d);fechar();filtrarFunil();render();
+    if(tipo==='venda'){toast('Registre a venda e envie o cupom');location.href='cupons.html?venda='+encodeURIComponent(l.id)+'&volta=leads.html';return}
+    toast(tipo==='lead'?'Voltou para Leads novos, com contato para hoje':'Marcado como já era aluno')}
+  catch(e){$('l-erro').textContent='Não foi possível salvar: '+String(e.message).slice(0,120)}
+}
 async function zerarTarefas(){
   const agora=new Date().toISOString();
   const n=todos.filter(l=>funilDe(l)==='leads'&&String(l.created_at||'')<agora&&!l.indicado_por_codigo&&!tentativasDe(l).length&&!l.venda_anual&&l.venda_tipo!=='outro').length;
@@ -374,6 +394,7 @@ function abrirLead(id,alvo){
   $('l-dados').innerHTML=[['WhatsApp',l.whatsapp||'sem número'],['Origem',ORIGEM[l.origem]||l.origem||''],l.utm_content||l.utm_campaign?['Anúncio',(l.utm_campaign||'')+(l.utm_content?' · '+l.utm_content:'')]:null,['Chegou',dataHoraBR(l.created_at)],['Consultor',l.consultora_id||'ninguém ainda'],l.indicado_por_codigo?['Indicado por',(l.indicado_por_nome||'')+' ('+l.indicado_por_codigo+')']:null,l.idade?['Idade',l.idade]:null,l.treina?['Treina hoje',{nao_treina:'Não treina',treina:'Treina'}[l.treina]||l.treina]:null,l.tempo_parado?['Parado há',{menos_3m:'menos de 3 meses','3a12m':'3 a 12 meses',mais_1a:'mais de 1 ano'}[l.tempo_parado]||l.tempo_parado]:null,l.utm_content?['Trazido por',l.utm_content]:null].filter(Boolean).map(([a,b])=>'<div><span>'+esc(a)+'</span>'+esc(b)+'</div>').join('');
   renderScripts(l);
   const fo=funilObj(funilDe(l));
+  $('l-conf').hidden=!fo.conferir;
   $('l-etapa').innerHTML=fo.etapas.map(e=>'<option value="'+e.id+'">'+e.n+'</option>').join('');
   $('r-comp').hidden=!!fo.lista;
   {const cs=axConsultores(),eu=AX_USER.papel==='consultor',ok=ehConsultorVenda(l.consultora_id);
@@ -441,11 +462,12 @@ async function salvar(){
   }catch(err){$('l-erro').textContent='Não foi possível salvar: '+String(err.message).slice(0,140)+(err.status===400?' (rode o SQL da Central de Leads)':'')}
   finally{b.disabled=false}
 }
-function abrirNovo(){$('n-nome').value='';$('n-wpp').value='';$('n-erro').textContent='';const g=AX_USER.papel!=='consultor';$('n-resp-c').hidden=!g;$('n-resp').innerHTML='<option value="">Escolha o consultor</option>'+axConsultores().map(n=>'<option>'+esc(n)+'</option>').join('');$('m-novo').classList.add('on')}
+function abrirNovo(){$('n-ori').value='';$('n-nome').value='';$('n-wpp').value='';$('n-erro').textContent='';const g=AX_USER.papel!=='consultor';$('n-resp-c').hidden=!g;$('n-resp').innerHTML='<option value="">Escolha o consultor</option>'+axConsultores().map(n=>'<option>'+esc(n)+'</option>').join('');$('m-novo').classList.add('on')}
 $('n-wpp').addEventListener('input',()=>{const w=$('n-wpp');let d=w.value.replace(/\D/g,'').slice(0,11),v=d;if(d.length>2)v='('+d.slice(0,2)+') '+d.slice(2);if(d.length>7)v='('+d.slice(0,2)+') '+d.slice(2,d.length-4)+'-'+d.slice(-4);w.value=v});
 async function criarLead(){
   const nome=$('n-nome').value.trim().replace(/\s+/g,' '),dig=$('n-wpp').value.replace(/\D/g,'');
   if(nome.length<3||dig.length<10){$('n-erro').textContent='Preencha nome e WhatsApp com DDD.';return}
+  if(!$('n-ori').value){$('n-erro').textContent='Escolha a origem: de onde a pessoa veio.';return}
   const rsp=AX_USER.papel==='consultor'?null:$('n-resp').value;if(AX_USER.papel!=='consultor'&&!rsp){$('n-erro').textContent='Escolha o consultor responsável.';return}
   const wn='55'+dig,ja=leads.find(x=>x.whatsapp_norm===wn);
   if(ja){$('n-erro').textContent='Esse WhatsApp já está na Central como '+ja.nome+'.';return}

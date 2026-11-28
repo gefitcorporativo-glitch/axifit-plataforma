@@ -210,3 +210,10 @@ alter table axifit_lead_campanhas add column if not exists ciclo jsonb default '
 -- 13) Funis: Leads novos, Renovação e listas importadas (28/11/2026)
 alter table axifit_leads add column if not exists funil text;
 alter table axifit_lead_campanhas add column if not exists funis jsonb default '[]'::jsonb;
+
+-- 14) Contatos cadastrados à mão no começo do lançamento vão para "Para conferir" (28/11/2026)
+update axifit_leads set funil = 'conferir'
+where academia_id = 'c240eedb-210a-4b99-afc2-02a466a9defd'
+  and origem = 'whatsapp' and funil is null
+  and created_at < '2026-11-22'
+  and coalesce(venda_anual, false) = false and coalesce(venda_tipo, '') <> 'outro';

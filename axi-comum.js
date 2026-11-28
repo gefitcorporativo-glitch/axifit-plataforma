@@ -126,7 +126,8 @@ function selo(min){const c=min<=5?'ok':min<=10?'at':'ru';const t=min<60?min+' mi
 function etapasLista(ganho){return [{id:'lista',n:'Lista',d:'Ainda sem contato'},{id:'tentativa',n:'1ª tentativa',d:'Mensagem ou ligação feita'},{id:'atendimento',n:'Atendimento iniciado',d:'Respondeu'},{id:'agendado',n:'Matrícula agendada',d:'Dia e hora marcados'},{id:'ganho',n:ganho,d:'Venda do lançamento'},{id:'perdido',n:'Perdido',d:'Encerrado sem venda'}]}
 const FUNIL_LEADS={id:'leads',nome:'Leads novos',etapas:ETAPAS,ini:'novo',prim:'boas_vindas',ganho:'fechado'};
 const FUNIL_RENOV={id:'renovacao',nome:'Renovação',etapas:etapasLista('Renovou'),ini:'lista',prim:'tentativa',ganho:'ganho',lista:true};
-function axFunis(){return [FUNIL_LEADS,FUNIL_RENOV].concat(((AX_CAMP&&AX_CAMP.funis)||[]).filter(f=>f&&f.id&&!f.arquivado).map(f=>({id:f.id,nome:f.nome,etapas:etapasLista('Convertido'),ini:'lista',prim:'tentativa',ganho:'ganho',lista:true,custom:true})))}
+const FUNIL_CONF={id:'conferir',nome:'Para conferir',etapas:[{id:'conferir',n:'Conferir',d:'Já virou aluno ou ainda é lead?'}],ini:'conferir',prim:'conferir',ganho:null,conferir:true};
+function axFunis(){return [FUNIL_LEADS,FUNIL_RENOV,FUNIL_CONF].concat(((AX_CAMP&&AX_CAMP.funis)||[]).filter(f=>f&&f.id&&!f.arquivado).map(f=>({id:f.id,nome:f.nome,etapas:etapasLista('Convertido'),ini:'lista',prim:'tentativa',ganho:'ganho',lista:true,custom:true})))}
 function funilObj(id){return axFunis().find(f=>f.id===id)||FUNIL_LEADS}
 function funilDe(l){
   if(l.oculto)return null;
@@ -137,6 +138,7 @@ function funilDe(l){
 }
 function etapaDe(l){
   const f=funilDe(l);
+  if(f==='conferir')return 'conferir';
   if(f&&f!=='leads'){
     if(l.venda_anual||l.venda_tipo==='outro')return 'ganho';
     const fo=funilObj(f);return fo.etapas.some(e=>e.id===l.etapa)?l.etapa:'lista';
